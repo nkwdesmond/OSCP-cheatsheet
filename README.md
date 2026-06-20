@@ -1,6 +1,6 @@
 # OSCP Cheatsheet
 
-A local, single-file HTML OSCP cheatsheet with dynamic command generation.
+A local, single-file HTML [OSCP cheatsheet](https://nkwdesmond.github.io/OSCP-cheatsheet/) with dynamic command generation.
 
 The cheatsheet lets you paste target machines, users, passwords, and hashes, then select active values from sticky dropdowns. Commands are generated dynamically and can be copied line by line.
 
