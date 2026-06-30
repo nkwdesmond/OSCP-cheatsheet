@@ -4,6 +4,10 @@ A local, single-file HTML [OSCP cheatsheet](https://nkwdesmond.github.io/OSCP-ch
 
 The cheatsheet lets you paste target machines, users, passwords, and hashes, then select active values from sticky dropdowns. Commands are generated dynamically and can be copied line by line.
 
+This cheatsheet focuses on commands that are:
+1. Commonly used
+2. Used to discover possible attack vectors
+
 ## Features
 
 - Sticky **Selected Values** section
