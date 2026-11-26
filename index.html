@@ -877,7 +877,7 @@ lab</textarea>
           { prefix: "unshadow", template: "unshadow passwd shadow > combined_hashes.txt" },
           { prefix: "KeePass password", template: "keepass2john Database.kdbx > keepass.hash" },
           { prefix: "KeePass browse content", template: "kpcli --kdb=Database.kdbx" },
-          { prefix: "john", template: "john --format={johnFormat} --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt" },
+          { prefix: "john", template: "john --wordlist=/usr/share/wordlists/rockyou.txt --format={johnFormat} hashes.txt" },
           { prefix: "", template: "john --format={johnFormat} --show hashes.txt" },
           { prefix: "", template: "cat ~/.john/john.pot" },
           { prefix: "hashcat", template: "hashcat -m {hashcatModule} hashes.txt /usr/share/wordlists/rockyou.txt{hashcatRuleFlag} --force" },
